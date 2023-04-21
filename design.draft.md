@@ -1,4 +1,4 @@
-# Design
+# Design (draft)
 
 ## Vesting DApp for Cardano Blockchain
 
@@ -14,17 +14,18 @@ This document outlines the design for a Vesting DApp on the Cardano blockchain, 
 
 ### Workflow
 
-1. The organization creates a new NFT minting policy by parameterizing an existing on-chain script, specifying allowed members and other constraints.
-2. The person (or people) representing organization deposit tokens for their members into the vesting contract, creating a utxo per member.
-3. The person representing the organization specifies the time of the full unlock and the slot when unlocking starts.
+1. The organization creates a new NFT minting policy by parameterizing an existing on-chain script, specifying representatives and other constraints.
+2. The organization representatives deposit tokens into the vesting contract, creating at least one utxo per beneficiary.
+3. The organization representatives specify time of the full unlock and slot of next unlock, and as an optional, vesting span. If vesting span is defined, with any unlock, next unlock slot will have to be always set as: ```current unlock slot + span```.
 4. The contract can validate the number of allowed tokens to be withdrawn based on the current slot and the specified vesting schedule.
-5. Members can withdraw their vested tokens according to the vesting schedule.
-6. Organization representatives can overrule the vesting process, such as canceling someone's future tokens, if a majority decides on this action.
+5. Beneficiaries can withdraw their vested tokens according to the vesting schedule.
+6. Organization representatives can overrule the vesting process, such as canceling beneficiary's future tokens, if a majority decides on this action.
 
 ### Considerations
 
 - This design allows for an easily trackable vesting process on the Cardano blockchain.
 - The linear vesting schedule can be extended to more complex vesting curves by creating multiple utxos for each user.
+- Allows both dynamic and pre-defined unlock schedules.
 - The vesting contract ensures that only allowed members can mint tokens according to the organization's NFT minting policy.
 - Organization representatives have the ability to overrule vesting decisions if a majority agrees.
 
