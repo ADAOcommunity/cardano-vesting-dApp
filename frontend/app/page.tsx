@@ -1,39 +1,104 @@
-import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
 
-import { siteConfig } from "@/config/site"
-import { buttonVariants } from "@/components/ui/button"
+import { DatePicker } from "@/components/ui/date-picker"
+import {Icons} from "@/components/icons"
 
-export default function IndexPage() {
+export default function Page() {
   return (
-    <section className="container grid items-center gap-6 pb-8 pt-6 md:py-10">
-      <div className="flex max-w-[980px] flex-col items-start gap-2">
-        <h1 className="text-3xl font-extrabold leading-tight tracking-tighter sm:text-3xl md:text-5xl lg:text-6xl">
-          Beautifully designed components <br className="hidden sm:inline" />
-          built with Radix UI and Tailwind CSS.
-        </h1>
-        <p className="max-w-[700px] text-lg text-muted-foreground sm:text-xl">
-          Accessible and customizable components that you can copy and paste
-          into your apps. Free. Open Source. And Next.js 13 Ready.
-        </p>
-      </div>
-      <div className="flex gap-4">
-        <Link
-          href={siteConfig.links.docs}
-          target="_blank"
-          rel="noreferrer"
-          className={buttonVariants({ size: "lg" })}
-        >
-          Documentation
-        </Link>
-        <Link
-          target="_blank"
-          rel="noreferrer"
-          href={siteConfig.links.github}
-          className={buttonVariants({ variant: "outline", size: "lg" })}
-        >
-          GitHub
-        </Link>
-      </div>
-    </section>
+    <div className="container mt-5 px-4">
+    <Tabs defaultValue="account" className="w-[600px]">
+      <TabsList className="grid w-full grid-cols-2">
+        <TabsTrigger value="account">Schedule</TabsTrigger>
+        <TabsTrigger value="password">Artifacts</TabsTrigger>
+      </TabsList>
+      <TabsContent value="account">
+        <Card>
+          <CardHeader>
+            <CardTitle>Schedule</CardTitle>
+            <CardDescription>
+              Settings for the vesting schedule
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div>Full Unlock Date</div>
+            <div className="space-y-1">
+              <DatePicker />
+            </div>
+            <div>Next Unlock Date</div>
+            <div className="space-y-1">
+              <DatePicker />
+            </div>
+            <div className="font-bold">Beneficiaries</div>
+            <div className="flex flex-row">
+              <div className="p-2">
+                <Icons.user/>
+              </div>
+              <div className="w-3/4">
+                <Input id="username" defaultValue="$project-developer" />
+              </div>
+            </div>
+            <div className="flex flex-row">
+              <div className="p-2">
+                <Icons.user/>
+              </div>
+              <div className="w-3/4">
+                <Input id="username" defaultValue="$project-marketing" />
+              </div>
+            </div>
+            <div className="flex flex-row">
+              <div className="p-2">
+                <Icons.user/>
+              </div>
+              <div className="w-3/4">
+                <Input id="username" defaultValue="$project-designer" />
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button>Next</Button>
+          </CardFooter>
+        </Card>
+      </TabsContent>
+      <TabsContent value="password">
+        <Card>
+          <CardHeader>
+            <CardTitle>Artifacts</CardTitle>
+            <CardDescription>
+              Deposit tokens into the contract
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="space-y-1">
+              <Label htmlFor="current">Current password</Label>
+              <Input id="current" type="password" />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="new">New password</Label>
+              <Input id="new" type="password" />
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button>Save password</Button>
+          </CardFooter>
+        </Card>
+      </TabsContent>
+    </Tabs>
+    </div>
   )
 }
