@@ -25,6 +25,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/use-toast"
 import { BeneficiarySchedule } from "./schedule-form"
+import { Card, CardContent, CardTitle } from "../ui/card"
 
 const profileFormSchema = z.object({
     username: z
@@ -121,34 +122,50 @@ export function ProfileForm() {
             ),
         })
     }
-
+    const addBeneficiary = (e: any) => {
+        e.preventDefault()
+        append({ beneficiary: "", schedule: [{ amount: 0, freeDate: new Date(), token: "" }] })
+    }
+    const removeBeneficiary = (e: any) => {
+        e.preventDefault()
+        remove()
+    }
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 {fields.map((field, index) => (
-                    <>
-                        <FormField
-                            control={form.control}
-                            name={`items.${index}.beneficiary`}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Beneficiary</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Enter address..." {...field} />
-                                    </FormControl>
-                                    <FormDescription>
-                                        Address of the beneficiary
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <>
-                            <BeneficiarySchedule scheduleIndex={index} />
-                        </>
-                    </>
+                    <Card>
+                        <div className="text-center m-2" >
+                            <CardTitle title={`Beneficiary ${index}`} >
+                                {`Beneficiary ${index}`}
+                            </CardTitle>
+                        </div>
+                        <CardContent>
+                            <FormField
+                                control={form.control}
+                                name={`items.${index}.beneficiary`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Beneficiary</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Enter address..." {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            Address of the beneficiary
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <BeneficiarySchedule onRemove={removeBeneficiary} scheduleIndex={index} />
+                        </CardContent>
+
+                    </Card>
                 ))}
-                <Button type="submit">Update profile</Button>
+                <div className="flex justify-between w-full">
+                    <Button variant="secondary" onClick={addBeneficiary} >Add beneficiary</Button>
+                    <Button type="submit">Create schedule</Button>
+                </div>
             </form>
         </Form>
     )

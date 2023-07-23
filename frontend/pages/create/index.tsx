@@ -11,12 +11,7 @@ export default function Create() {
         <>
             <Layout>
                 <div>
-                    <Card>
-                        <CardContent>
-                            <ProfileForm />
-
-                        </CardContent>
-                    </Card>
+                    <ProfileForm />
                 </div>
             </Layout>
         </>
