@@ -45,6 +45,7 @@
     "date-fns": "^2.30.0",
     "eslint": "8.45.0",
     "eslint-config-next": "13.4.7",
+    "lucid-cardano": "^0.10.6",
     "lucide-react": "^0.263.0",
     "next": "13.4.7",
     "next-themes": "^0.2.1",
