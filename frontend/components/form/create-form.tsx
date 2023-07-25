@@ -27,30 +27,6 @@ import { toast } from "@/components/ui/use-toast"
 import { BeneficiarySchedule } from "./schedule-form"
 import { Card, CardContent, CardTitle } from "../ui/card"
 
-const profileFormSchema = z.object({
-    username: z
-        .string()
-        .min(2, {
-            message: "Username must be at least 2 characters.",
-        })
-        .max(30, {
-            message: "Username must not be longer than 30 characters.",
-        }),
-    email: z
-        .string({
-            required_error: "Please select an email to display.",
-        })
-        .email(),
-    bio: z.string().max(160).min(4),
-    urls: z
-        .array(
-            z.object({
-                value: z.string().url({ message: "Please enter a valid URL." }),
-            })
-        )
-        .optional(),
-})
-
 
 const vestingScheduleSchema = z.object(
     {
@@ -68,8 +44,10 @@ const vestingScheduleSchema = z.object(
                     .array(
                         z.object({
                             freeDate: z.date(),
-                            token: z.string(),
-                            amount: z.number()
+                            token: z.string().min(2, {
+                                message: "Address must be specified",
+                            }),
+                            amount: z.number().min(0.1, { message: "Amount must be greater than 0" })
                         })
                     )
             })
@@ -80,7 +58,6 @@ const vestingScheduleSchema = z.object(
 
 
 
-type ProfileFormValues = z.infer<typeof profileFormSchema>
 type VestingFormValues = z.infer<typeof vestingScheduleSchema>
 
 // This can come from your database or API.
@@ -112,7 +89,7 @@ export function ProfileForm() {
         control: form.control,
     })
 
-    function onSubmit(data: ProfileFormValues) {
+    function onSubmit(data: VestingFormValues) {
         toast({
             title: "You submitted the following values:",
             description: (
@@ -122,6 +99,7 @@ export function ProfileForm() {
             ),
         })
     }
+
     const addBeneficiary = (e: any) => {
         e.preventDefault()
         append({ beneficiary: "", schedule: [{ amount: 0, freeDate: new Date(), token: "" }] })
@@ -134,7 +112,7 @@ export function ProfileForm() {
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 {fields.map((field, index) => (
-                    <Card>
+                    <Card key={field.id} >
                         <div className="text-center m-2" >
                             <CardTitle title={`Beneficiary ${index}`} >
                                 {`Beneficiary ${index}`}

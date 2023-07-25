@@ -34,7 +34,7 @@ import { Card, CardContent } from "../ui/card"
 
 type Props = {
     scheduleIndex: number,
-    onRemove: (e:any) => void
+    onRemove: (e: any) => void
 }
 
 export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
@@ -47,17 +47,20 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
     console.log({ values })
 
     const addBeneficiarySchedule = (e: any) => {
+
         e.preventDefault()
-        append({ amount: "", token: "", freeDate: "" })
+        append({ amount: 0, token: "", freeDate: new Date() })
+
     }
-    const removeBeneficiarySchedule = (e: any) => {
+    const removeBeneficiarySchedule = (e: any, index: number) => {
         e.preventDefault()
-        remove()
+        remove(index)
     }
     return (
         <>
             {fields.map((field, index) => (
-                <Card className="my-2" >
+                <Card key={field.id} className="my-2" >
+                    <>{console.log({field})}</>
                     <CardContent>
                         <FormField
                             control={form.control}
@@ -82,7 +85,7 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
                                 <FormItem>
                                     <FormLabel>Amount</FormLabel>
                                     <FormControl>
-                                        <Input type="number" placeholder="Enter amount..." {...field} />
+                                        <Input onChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.amount`, Number(e.target.value))} type="number" placeholder="Enter amount..." />
                                     </FormControl>
                                     <FormDescription>
                                         Amount to unlock
@@ -96,7 +99,7 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
                             name={`items.${scheduleIndex}.schedule.${index}.freeDate`}
                             render={({ field }) => (
                                 <FormItem>
-                                    <> {console.log({ field })}</>
+                                    {/* <> {console.log({ field })}</> */}
                                     {/* <FormLabel>Unlock date</FormLabel> */}
                                     <FormControl>
                                         <Popover>
@@ -129,7 +132,7 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
                                 </FormItem>
                             )}
                         />
-                       <Button className="mt-4" variant="destructive" onClick={removeBeneficiarySchedule} >Remove trench</Button>
+                        <Button className="mt-4" variant="destructive" onClick={(e)=>removeBeneficiarySchedule(e, index)} >Remove trench</Button>
 
                     </CardContent>
                 </Card>
