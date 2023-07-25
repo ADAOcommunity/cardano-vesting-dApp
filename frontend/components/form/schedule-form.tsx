@@ -146,7 +146,7 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
                                         <FormLabel>Periodical?</FormLabel>
                                         <FormControl>
                                             <div className="flex items-center space-x-2">
-                                                <Switch onCheckedChange={(e)=>form.setValue(`items.${scheduleIndex}.schedule.${index}.periodical`, e)} id="periodical" />
+                                                <Switch onCheckedChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.periodical`, e)} id="periodical" />
                                                 <Label htmlFor="airplane-mode">Periodical</Label>
                                             </div>
                                         </FormControl>
@@ -161,22 +161,42 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
 
 
                         </div>
-                        {form.getValues(`items.${scheduleIndex}.schedule.${index}.periodical`) && <FormField
-                            control={form.control}
-                            name={`items.${scheduleIndex}.schedule.${index}.periodLength`}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Frequency (days)</FormLabel>
-                                    <FormControl>
-                                        <Input onChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.amount`, Number(e.target.value))} type="number" placeholder="Enter frequency in days..." />
-                                    </FormControl>
-                                    <FormDescription>
-                                        How often will this amount be released?
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />}
+                        {form.getValues(`items.${scheduleIndex}.schedule.${index}.periodical`) &&
+                            <div className="flex flex-row space-x-2 justify-even items-center">
+                                <FormField
+                                    control={form.control}
+                                    name={`items.${scheduleIndex}.schedule.${index}.periodLength`}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Frequency (days)</FormLabel>
+                                            <FormControl>
+                                                <Input onChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.periodLength`, Number(e.target.value))} type="number" placeholder="Enter frequency in days..." />
+                                            </FormControl>
+                                            <FormDescription>
+                                                How often will this amount be released?
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name={`items.${scheduleIndex}.schedule.${index}.periods`}
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Periods</FormLabel>
+                                            <FormControl>
+                                                <Input onChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.periods`, Number(e.target.value))} type="number" placeholder="Enter number of periods" />
+                                            </FormControl>
+                                            <FormDescription>
+                                                How many periods will this amount be released?
+                                            </FormDescription>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                        }
                         <Button className="mt-4" variant="destructive" onClick={(e) => removeBeneficiarySchedule(e, index)} >Remove trench</Button>
 
                     </CardContent>
