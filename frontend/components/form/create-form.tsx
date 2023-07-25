@@ -47,6 +47,8 @@ const vestingScheduleSchema = z.object(
                             token: z.string().min(2, {
                                 message: "Address must be specified",
                             }),
+                            periodical: z.boolean(),
+                            periodLength: z.number().min(1, { message: "Period length must be greater than 0" }).optional(),
                             amount: z.number().min(0.1, { message: "Amount must be greater than 0" })
                         })
                     )
@@ -69,6 +71,8 @@ const defaultValues: Partial<VestingFormValues> = {
                 {
                     amount: 0,
                     freeDate: new Date(),
+                    periodical: false,
+                    periodLength: 0,
                     token: ""
                 }
             ]

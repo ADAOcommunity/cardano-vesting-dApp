@@ -29,6 +29,8 @@ import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { Separator } from "../ui/separator"
 import { Card, CardContent } from "../ui/card"
+import { Switch } from "../ui/switch"
+import { Label } from "../ui/label"
 
 
 
@@ -60,79 +62,122 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
         <>
             {fields.map((field, index) => (
                 <Card key={field.id} className="my-2" >
-                    <>{console.log({field})}</>
-                    <CardContent>
-                        <FormField
+                    <>{console.log({ field })}</>
+                    <CardContent className="flex flex-col space-y-4" >
+                        <div className="flex flex-row space-x-2 justify-even items-center">
+                            <FormField
+                                control={form.control}
+                                name={`items.${scheduleIndex}.schedule.${index}.token`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Token</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Enter token name" {...field} />
+                                        </FormControl>
+                                        <FormDescription>
+                                            Token name
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name={`items.${scheduleIndex}.schedule.${index}.amount`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Amount</FormLabel>
+                                        <FormControl>
+                                            <Input onChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.amount`, Number(e.target.value))} type="number" placeholder="Enter amount..." />
+                                        </FormControl>
+                                        <FormDescription>
+                                            Amount to unlock
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
+                        <div className="flex flex-row space-x-2 justify-even items-center">
+                            <FormField
+                                control={form.control}
+                                name={`items.${scheduleIndex}.schedule.${index}.freeDate`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        {/* <> {console.log({ field })}</> */}
+                                        <FormLabel>Unlock start date: </FormLabel>
+                                        <FormControl>
+
+                                            <Popover>
+                                                <PopoverTrigger asChild>
+                                                    <Button
+                                                        variant={"outline"}
+                                                        className={cn(
+                                                            "w-[280px] justify-start text-left font-normal",
+                                                            !field.value && "text-muted-foreground"
+                                                        )}
+                                                    >
+                                                        <CalendarIcon className="mr-2 h-4 w-4" />
+                                                        {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
+                                                    </Button>
+                                                </PopoverTrigger>
+                                                <PopoverContent className="w-auto p-0">
+                                                    <Calendar
+                                                        mode="single"
+                                                        selected={new Date()}
+                                                        onSelect={(e) => form.setValue(field.name, e)}
+                                                        initialFocus
+                                                    />
+                                                </PopoverContent>
+                                            </Popover>
+                                        </FormControl>
+                                        <FormDescription>
+                                            Date to unlock tokens
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
+                                name={`items.${scheduleIndex}.schedule.${index}.periodical`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Periodical?</FormLabel>
+                                        <FormControl>
+                                            <div className="flex items-center space-x-2">
+                                                <Switch onCheckedChange={(e)=>form.setValue(`items.${scheduleIndex}.schedule.${index}.periodical`, e)} id="periodical" />
+                                                <Label htmlFor="airplane-mode">Periodical</Label>
+                                            </div>
+                                        </FormControl>
+                                        <FormDescription>
+                                            Is the schedule periodical or on a specific date?
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+
+
+
+                        </div>
+                        {form.getValues(`items.${scheduleIndex}.schedule.${index}.periodical`) && <FormField
                             control={form.control}
-                            name={`items.${scheduleIndex}.schedule.${index}.token`}
+                            name={`items.${scheduleIndex}.schedule.${index}.periodLength`}
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Token</FormLabel>
+                                    <FormLabel>Frequency (days)</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Enter token name" {...field} />
+                                        <Input onChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.amount`, Number(e.target.value))} type="number" placeholder="Enter frequency in days..." />
                                     </FormControl>
                                     <FormDescription>
-                                        Token name
+                                        How often will this amount be released?
                                     </FormDescription>
                                     <FormMessage />
                                 </FormItem>
                             )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name={`items.${scheduleIndex}.schedule.${index}.amount`}
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Amount</FormLabel>
-                                    <FormControl>
-                                        <Input onChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.amount`, Number(e.target.value))} type="number" placeholder="Enter amount..." />
-                                    </FormControl>
-                                    <FormDescription>
-                                        Amount to unlock
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name={`items.${scheduleIndex}.schedule.${index}.freeDate`}
-                            render={({ field }) => (
-                                <FormItem>
-                                    {/* <> {console.log({ field })}</> */}
-                                    {/* <FormLabel>Unlock date</FormLabel> */}
-                                    <FormControl>
-                                        <Popover>
-                                            <PopoverTrigger asChild>
-                                                <Button
-                                                    variant={"outline"}
-                                                    className={cn(
-                                                        "w-[280px] justify-start text-left font-normal",
-                                                        !field.value && "text-muted-foreground"
-                                                    )}
-                                                >
-                                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                                    {field.value ? format(field.value, "PPP") : <span>Pick a date</span>}
-                                                </Button>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0">
-                                                <Calendar
-                                                    mode="single"
-                                                    selected={new Date()}
-                                                    onSelect={(e) => form.setValue(field.name, e)}
-                                                    initialFocus
-                                                />
-                                            </PopoverContent>
-                                        </Popover>
-                                    </FormControl>
-                                    <FormDescription>
-                                        Date to unlock tokens
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <Button className="mt-4" variant="destructive" onClick={(e)=>removeBeneficiarySchedule(e, index)} >Remove trench</Button>
+                        />}
+                        <Button className="mt-4" variant="destructive" onClick={(e) => removeBeneficiarySchedule(e, index)} >Remove trench</Button>
 
                     </CardContent>
                 </Card>
