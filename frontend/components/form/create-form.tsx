@@ -106,11 +106,16 @@ export function ProfileForm() {
 
     const addBeneficiary = (e: any) => {
         e.preventDefault()
-        append({ beneficiary: "", schedule: [{ amount: 0, freeDate: new Date(), token: "" }] })
+        append({ beneficiary: "", schedule: [{ amount: 0, freeDate: new Date(), token: "", periodical: false, periodLength: 0 }] })
     }
-    const removeBeneficiary = (e: any) => {
+    const removeBeneficiary = (e: any, index:number) => {
         e.preventDefault()
-        remove()
+        remove(index)
+    }
+    const duplicateIndex = (e: any, index:number) => {
+        e.preventDefault()
+        const indexValues = form.getValues(`items.${index}`)
+        append(indexValues)
     }
     return (
         <Form {...form}>
@@ -119,7 +124,10 @@ export function ProfileForm() {
                     <Card key={field.id} >
                         <div className="text-center m-2" >
                             <CardTitle title={`Beneficiary ${index}`} >
-                                {`Beneficiary ${index}`}
+                                <div className="flex flex-row space-x-4 justify-center">
+                                    <> {`Beneficiary ${index}`}</>
+                                    <Button onClick={(e)=>duplicateIndex(e, index)} variant="secondary" >Duplicate</Button>
+                                </div>
                             </CardTitle>
                         </div>
                         <CardContent>
@@ -139,7 +147,7 @@ export function ProfileForm() {
                                     </FormItem>
                                 )}
                             />
-                            <BeneficiarySchedule onRemove={removeBeneficiary} scheduleIndex={index} />
+                            <BeneficiarySchedule onRemove={(e)=>removeBeneficiary(e,index)} scheduleIndex={index} />
                         </CardContent>
 
                     </Card>
