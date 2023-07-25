@@ -115,7 +115,7 @@ export function ProfileForm() {
     const duplicateIndex = (e: any, index:number) => {
         e.preventDefault()
         const indexValues = form.getValues(`items.${index}`)
-        append(indexValues)
+        append({...indexValues, beneficiary:""})
     }
     return (
         <Form {...form}>
@@ -126,7 +126,7 @@ export function ProfileForm() {
                             <CardTitle title={`Beneficiary ${index}`} >
                                 <div className="flex flex-row space-x-4 justify-center">
                                     <> {`Beneficiary ${index}`}</>
-                                    <Button onClick={(e)=>duplicateIndex(e, index)} variant="secondary" >Duplicate</Button>
+                                    <Button onClick={(e)=>duplicateIndex(e, index)} variant="link" >Clone</Button>
                                 </div>
                             </CardTitle>
                         </div>
