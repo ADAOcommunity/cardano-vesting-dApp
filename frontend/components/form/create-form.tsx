@@ -29,8 +29,13 @@ import { Card, CardContent, CardTitle } from "../ui/card"
 import { useContext, useEffect } from "react"
 import { UserContext } from "@/pages/_app"
 import { getAssetsFromStakeAddress } from "@/utils/utils"
-import { Data } from "lucid-cardano"
+import {  Data, SpendingValidator, fromHex, toHex } from "lucid-cardano"
 
+const scriptCbor = "59021b0100003232323232323232323232322223253330093232533300b3370e900100089919918008009129998090008a5113232533301000213300400400114a0602c00466e1d20023010375460280026602266601866646444660066eb0cc030c03800920100013001001222533301300214a026464a66602266e3c00800c5288999802802800801980b8019bae301500233008300a00548000dd719804180500224004980103d87a80004c0103d87980003301133300c3322323253330103370e90010008991919b89005001375a602e002601c0042940c038004cc028c030cc028c030009200048000cc020c028cc020c028015200048038dd69980418050022400098103d87a80004c0103d87980004bd7018048010a5030090013300530070024800852616320043253330093370e900000089919191919191919299980a980c0010a4c2a66024921334c6973742f5475706c652f436f6e73747220636f6e7461696e73206d6f7265206974656d73207468616e2065787065637465640016375c602c002602c0046eb4c050004c050008dd7180900098090011bad30100013007004153300a49012b436f6e73747220696e64657820646964206e6f74206d6174636820616e7920747970652076617269616e740016300700333001001480008888cccc01ccdc38008018069199980280299b8000448008c03c0040080088c018dd5000918021baa0015734ae7155ceaab9e5573eae815d0aba21"
+const validator: SpendingValidator  =  {
+    type: "PlutusV2",
+    script: scriptCbor,
+  }
 
 const vestingScheduleSchema = z.object(
     {
@@ -40,10 +45,10 @@ const vestingScheduleSchema = z.object(
                     .string()
                     .min(2, {
                         message: "Address must be specified",
-                    })
-                    .max(30, {
+                    }), 
+                   /*  .max(30, {
                         message: "Username must not be longer than 30 characters.",
-                    }),
+                    }), */
                 schedule: z
                     .array(
                         z.object({
@@ -60,7 +65,7 @@ const vestingScheduleSchema = z.object(
             })
         )
     }
-)
+)   
 
 
 type FormattedSchedule = {
@@ -69,13 +74,13 @@ type FormattedSchedule = {
     token: string
     amount: number
 }
-const Datum = Data.Object({
-    beneficiary: Data.String,
-    date: Data.Integer,
+/* const Datum = Data.Object({
+    beneficiary: Data.Literal(),
+    date: Data.Integer(),
     token: Data.String,
     amount: Data.BigInt,
 });
-type Datum = Data.Static<typeof Datum>;
+type Datum = Data.Static<typeof Datum>; */
 type VestingFormValues = z.infer<typeof vestingScheduleSchema>
 
 // This can come from your database or API.
@@ -98,7 +103,7 @@ const defaultValues: Partial<VestingFormValues> = {
 
 }
 
-export function ProfileForm() {
+export function VestingForm() {
     const { lucid } = useContext(UserContext)
 
     const form = useForm<VestingFormValues>({
@@ -152,9 +157,10 @@ export function ProfileForm() {
     const formatValues = (values: VestingFormValues) => {
         const formatted: FormattedSchedule[] = []
         values.items.forEach((item) => {
+            const pkh = lucid!.utils.paymentCredentialOf(item.beneficiary).hash
             for (let schedule of item.schedule) {
                 const val = {
-                    beneficiary: item.beneficiary,
+                    beneficiary: pkh,//item.beneficiary,
                     date: schedule.freeDate.getTime(),
                     token: schedule.token,
                     amount: schedule.amount,
@@ -175,15 +181,14 @@ export function ProfileForm() {
     }
 
     const createTx = async (values: VestingFormValues) => {
-        const contractAddress=""
+        const contractAddress=lucid!.utils.validatorToAddress(validator)
 
         const formatted = formatValues(values)
         console.log({ formatted })
         let tx = lucid?.newTx()
         for (let receiver of formatted) {
-            const datum = Data.to<Datum>(
-                receiver,
-                Datum
+            const datum = Data.to(
+                Data.fromJson(receiver)
             );
             tx!.payToContract(contractAddress, { inline: datum }, { [receiver.token]: BigInt(receiver.amount) })
         }

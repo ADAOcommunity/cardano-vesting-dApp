@@ -1,4 +1,4 @@
-import { ProfileForm } from "@/components/form/create-form";
+import { VestingForm } from "@/components/form/create-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ export default function Create() {
         <>
             <Layout>
                 <div>
-                    <ProfileForm />
+                    <VestingForm />
                 </div>
             </Layout>
         </>
