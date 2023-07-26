@@ -26,6 +26,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/use-toast"
 import { BeneficiarySchedule } from "./schedule-form"
 import { Card, CardContent, CardTitle } from "../ui/card"
+import { useContext, useEffect } from "react"
+import { UserContext } from "@/pages/_app"
+import { getAssetsFromStakeAddress } from "@/utils/utils"
 
 
 const vestingScheduleSchema = z.object(
@@ -72,7 +75,7 @@ const defaultValues: Partial<VestingFormValues> = {
                 {
                     amount: 0,
                     freeDate: new Date(),
-                    periods:1,
+                    periods: 1,
                     periodical: false,
                     periodLength: 0,
                     token: ""
@@ -84,6 +87,8 @@ const defaultValues: Partial<VestingFormValues> = {
 }
 
 export function ProfileForm() {
+    const { lucid } = useContext(UserContext)
+
     const form = useForm<VestingFormValues>({
         resolver: zodResolver(vestingScheduleSchema),
         defaultValues,
@@ -110,25 +115,35 @@ export function ProfileForm() {
         e.preventDefault()
         append({ beneficiary: "", schedule: [{ amount: 0, freeDate: new Date(), token: "", periodical: false, periodLength: 0 }] })
     }
-    const removeBeneficiary = (e: any, index:number) => {
+    const removeBeneficiary = (e: any, index: number) => {
         e.preventDefault()
         remove(index)
     }
-    const duplicateIndex = (e: any, index:number) => {
+    const duplicateIndex = (e: any, index: number) => {
         e.preventDefault()
         const indexValues = form.getValues(`items.${index}`)
-        append({...indexValues, beneficiary:""})
+        append({ ...indexValues, beneficiary: "" })
     }
+
+    useEffect(() => {
+        if (lucid) {
+            getAssetsFromStakeAddress(lucid)
+            lucid.wallet?.address().then((addy) => {
+                console.log({ addy })
+            })
+        }
+    }, [lucid])
+
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 {fields.map((field, index) => (
-                    <Card key={field.id} >
+                    <Card className="border-2" key={field.id} >
                         <div className="text-center m-2" >
                             <CardTitle title={`Beneficiary ${index}`} >
                                 <div className="flex flex-row space-x-4 justify-center">
                                     <> {`Beneficiary ${index}`}</>
-                                    <Button onClick={(e)=>duplicateIndex(e, index)} variant="link" >Clone</Button>
+                                    <Button onClick={(e) => duplicateIndex(e, index)} variant="link" >Clone</Button>
                                 </div>
                             </CardTitle>
                         </div>
@@ -149,7 +164,7 @@ export function ProfileForm() {
                                     </FormItem>
                                 )}
                             />
-                            <BeneficiarySchedule onRemove={(e)=>removeBeneficiary(e,index)} scheduleIndex={index} />
+                            <BeneficiarySchedule onRemove={(e) => removeBeneficiary(e, index)} scheduleIndex={index} />
                         </CardContent>
 
                     </Card>

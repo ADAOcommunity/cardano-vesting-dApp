@@ -31,6 +31,7 @@ import { Separator } from "../ui/separator"
 import { Card, CardContent } from "../ui/card"
 import { Switch } from "../ui/switch"
 import { Label } from "../ui/label"
+import { TokenAutocomplete } from "./token-autocomplete"
 
 
 
@@ -63,17 +64,15 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
             {fields.map((field, index) => (
                 <Card key={field.id} className="my-2" >
                     <>{console.log({ field })}</>
-                    <CardContent className="flex flex-col space-y-4" >
+                    <CardContent className="flex flex-col space-y-4 " >
                         <div className="flex flex-row space-x-2 justify-even items-center">
                             <FormField
                                 control={form.control}
                                 name={`items.${scheduleIndex}.schedule.${index}.token`}
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Token</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Enter token name" {...field} />
-                                        </FormControl>
+                                        <TokenAutocomplete field={field} setValue={(val: string) => form.setValue(`items.${scheduleIndex}.schedule.${index}.token`, val)} />
+                                        {/* <Input placeholder="Enter token name" {...field} /> */}
                                         <FormDescription>
                                             Token name
                                         </FormDescription>
@@ -143,7 +142,7 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
                                 name={`items.${scheduleIndex}.schedule.${index}.periodical`}
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Periodical?</FormLabel>
+                                        {/* <FormLabel>Periodical?</FormLabel> */}
                                         <FormControl>
                                             <div className="flex items-center space-x-2">
                                                 <Switch onCheckedChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.periodical`, e)} id="periodical" />
@@ -197,7 +196,7 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
                                 />
                             </div>
                         }
-                        <Button className="mt-4" variant="destructive" onClick={(e) => removeBeneficiarySchedule(e, index)} >Remove trench</Button>
+                        <Button size={"sm"} className="mt-4 w-1/2 self-center" variant="destructive" onClick={(e) => removeBeneficiarySchedule(e, index)} >Remove trench</Button>
 
                     </CardContent>
                 </Card>
