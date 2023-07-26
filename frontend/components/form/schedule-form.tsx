@@ -87,7 +87,7 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
                                     <FormItem>
                                         <FormLabel>Amount</FormLabel>
                                         <FormControl>
-                                            <Input onChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.amount`, Number(e.target.value))} type="number" placeholder="Enter amount..." />
+                                            <Input value={form.getValues(`items.${scheduleIndex}.schedule.${index}.amount`)} onChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.amount`, Number(e.target.value))} type="number" placeholder="Enter amount..." />
                                         </FormControl>
                                         <FormDescription>
                                             Amount to unlock
