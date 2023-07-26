@@ -52,7 +52,7 @@ const vestingScheduleSchema = z.object(
                             }),
                             periodical: z.boolean(),
                             periods: z.number().min(1, { message: "Periods must be greater than 0" }).optional(),
-                            periodLength: z.number().min(1, { message: "Period length must be greater than 0" }).optional(),
+                            periodLength: z.number().min(0, { message: "Period length must be greater than 0" }).optional(),
                             amount: z.number().min(0.1, { message: "Amount must be greater than 0" })
                         })
                     )
@@ -62,7 +62,12 @@ const vestingScheduleSchema = z.object(
 )
 
 
-
+type FormattedSchedule = {
+    beneficiary: string
+    date: Date
+    token: string
+    amount: number
+}
 
 type VestingFormValues = z.infer<typeof vestingScheduleSchema>
 
@@ -101,6 +106,9 @@ export function ProfileForm() {
     })
 
     function onSubmit(data: VestingFormValues) {
+        console.log("submit")
+        const formattedValues = formatValues(data)
+        console.log({ formattedValues })
         toast({
             title: "You submitted the following values:",
             description: (
@@ -133,6 +141,31 @@ export function ProfileForm() {
             })
         }
     }, [lucid])
+
+    const formatValues = (values: VestingFormValues) => {
+        const formatted: FormattedSchedule[] = []
+        values.items.forEach((item) => {
+            for (let schedule of item.schedule) {
+                const val = {
+                    beneficiary: item.beneficiary,
+                    date: schedule.freeDate,
+                    token: schedule.token,
+                    amount: schedule.amount,
+                }
+                if (schedule.periodical) {
+                    for (let i = 0; i < schedule.periods!; i++) {
+                        formatted.push({
+                            ...val,
+                            date: new Date(val.date.getTime() + schedule.periodLength! * 86400000)
+                        })
+                    }
+                } else {
+                    formatted.push(val)
+                }
+            }
+        })
+        return formatted
+    }
 
     return (
         <Form {...form}>
@@ -171,7 +204,7 @@ export function ProfileForm() {
                 ))}
                 <div className="flex justify-between w-full">
                     <Button variant="secondary" onClick={addBeneficiary} >Add beneficiary</Button>
-                    <Button type="submit">Create schedule</Button>
+                    <Button onClick={() => console.log(form.formState.isValid)} type="submit">Create schedule</Button>
                 </div>
             </form>
         </Form>

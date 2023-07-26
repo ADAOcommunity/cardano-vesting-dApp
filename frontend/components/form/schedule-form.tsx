@@ -169,7 +169,7 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
                                         <FormItem>
                                             <FormLabel>Frequency (days)</FormLabel>
                                             <FormControl>
-                                                <Input onChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.periodLength`, Number(e.target.value))} type="number" placeholder="Enter frequency in days..." />
+                                                <Input value={form.getValues(`items.${scheduleIndex}.schedule.${index}.periodLength`)} onChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.periodLength`, Number(e.target.value))} type="number" placeholder="Enter frequency in days..." />
                                             </FormControl>
                                             <FormDescription>
                                                 How often will this amount be released?
@@ -185,7 +185,7 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
                                         <FormItem>
                                             <FormLabel>Periods</FormLabel>
                                             <FormControl>
-                                                <Input onChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.periods`, Number(e.target.value))} type="number" placeholder="Enter number of periods" />
+                                                <Input value={form.getValues(`items.${scheduleIndex}.schedule.${index}.periods`)}  onChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.periods`, Number(e.target.value))} type="number" placeholder="Enter number of periods" />
                                             </FormControl>
                                             <FormDescription>
                                                 How many periods will this amount be released?
