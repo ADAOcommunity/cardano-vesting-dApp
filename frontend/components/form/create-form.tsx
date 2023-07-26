@@ -29,6 +29,7 @@ import { Card, CardContent, CardTitle } from "../ui/card"
 import { useContext, useEffect } from "react"
 import { UserContext } from "@/pages/_app"
 import { getAssetsFromStakeAddress } from "@/utils/utils"
+import { Data } from "lucid-cardano"
 
 
 const vestingScheduleSchema = z.object(
@@ -64,11 +65,17 @@ const vestingScheduleSchema = z.object(
 
 type FormattedSchedule = {
     beneficiary: string
-    date: Date
+    date: number,
     token: string
     amount: number
 }
-
+const Datum = Data.Object({
+    beneficiary: Data.String,
+    date: Data.Integer,
+    token: Data.String,
+    amount: Data.BigInt,
+});
+type Datum = Data.Static<typeof Datum>;
 type VestingFormValues = z.infer<typeof vestingScheduleSchema>
 
 // This can come from your database or API.
@@ -105,10 +112,10 @@ export function ProfileForm() {
         control: form.control,
     })
 
-    function onSubmit(data: VestingFormValues) {
+    async function onSubmit(data: VestingFormValues) {
         console.log("submit")
-        const formattedValues = formatValues(data)
-        console.log({ formattedValues })
+        const txHash = await createTx(data)
+        console.log({ txHash })
         toast({
             title: "You submitted the following values:",
             description: (
@@ -148,7 +155,7 @@ export function ProfileForm() {
             for (let schedule of item.schedule) {
                 const val = {
                     beneficiary: item.beneficiary,
-                    date: schedule.freeDate,
+                    date: schedule.freeDate.getTime(),
                     token: schedule.token,
                     amount: schedule.amount,
                 }
@@ -156,7 +163,7 @@ export function ProfileForm() {
                     for (let i = 0; i < schedule.periods!; i++) {
                         formatted.push({
                             ...val,
-                            date: new Date(val.date.getTime() + schedule.periodLength! * 86400000)
+                            date: new Date(Number(val.date) + schedule.periodLength! * 86400000).getTime()
                         })
                     }
                 } else {
@@ -165,6 +172,25 @@ export function ProfileForm() {
             }
         })
         return formatted
+    }
+
+    const createTx = async (values: VestingFormValues) => {
+        const contractAddress=""
+
+        const formatted = formatValues(values)
+        console.log({ formatted })
+        let tx = lucid?.newTx()
+        for (let receiver of formatted) {
+            const datum = Data.to<Datum>(
+                receiver,
+                Datum
+            );
+            tx!.payToContract(contractAddress, { inline: datum }, { [receiver.token]: BigInt(receiver.amount) })
+        }
+        const txComplete = await tx?.complete()
+        const signedTx = await txComplete?.sign().complete()
+        const txHash= await signedTx?.submit()
+        return txHash
     }
 
     return (
