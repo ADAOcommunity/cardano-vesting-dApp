@@ -4,12 +4,18 @@ import initializeLucid from '@/utils/lucid'
 import { Lucid } from 'lucid-cardano'
 import type { AppProps } from 'next/app'
 import { Dispatch, SetStateAction, createContext, useEffect, useState } from 'react'
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQuery,
+} from "@tanstack/react-query";
 
 const initialUser = {
   address: "",
   walletName: ""
 }
 type User = typeof initialUser
+const queryClient = new QueryClient();
 
 export const UserContext = createContext<{
   user: User;
@@ -53,9 +59,11 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-      <UserContext.Provider value={{ user, setUser, lucid }}>
-        <Component {...pageProps} />
-      </UserContext.Provider>
+      <QueryClientProvider client={queryClient}>
+        <UserContext.Provider value={{ user, setUser, lucid }}>
+          <Component {...pageProps} />
+        </UserContext.Provider>
+      </QueryClientProvider>
     </ThemeProvider>
   )
 }

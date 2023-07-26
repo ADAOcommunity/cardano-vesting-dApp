@@ -1,5 +1,8 @@
 import { C, Constr, Data, Lucid, UTxO, WalletApi, fromHex } from "lucid-cardano";
 
+export const tokenNameFromHex = (assetName: string) => {
+    return Buffer.from(assetName, 'hex').toString('utf-8')
+}
 export const getAssetsFromStakeAddress = async (lucid: Lucid) => {
     const stakeAddress = await lucid.wallet.rewardAddress()
     let allBalance: any = [];
@@ -34,12 +37,12 @@ export const getAssetsFromStakeAddress = async (lucid: Lucid) => {
                 return {
                     unit: v.unit,
                     policyId,
-                    assetName: Buffer.from(assetName, 'hex').toString('utf-8'),
+                    assetName: tokenNameFromHex(assetName),
                     quantity: v.quantity,
                 };
             });
-            console.log({resp})
-            return resp
+        console.log({ resp })
+        return resp
     } catch (e) {
         console.log(e)
     }
@@ -116,28 +119,32 @@ export const getUserAddressesAndPkhs = async (walletName: string) => {
         }
 
     })
-    .filter((addr: any) => addr !== null)
+        .filter((addr: any) => addr !== null)
+    console.log({addresses})
     return addresses
 }
 
-export const getUtxosForAddresses = async ( lucid: Lucid, contractAddress: string, addresses: ({address:string, pkh: string} | null)[]) => {
+export const getUtxosForAddresses = async (lucid: Lucid, contractAddress: string, addresses: ({ address: string, pkh: string } | null)[]) => {
     // TO DO: check multiple addresses
     const utxos = await lucid.utxosAt(contractAddress)
     const formattedUtxos = []
-    const totals:{[key:string]:bigint}={}
-    const claimable: {[key:string]:{
-        amount: bigint,
-        utxos: UTxO[]
-    }}={}
-    for(let utxo of utxos){
+    const totals: { [key: string]: bigint } = {}
+    const claimable: {
+        [key: string]: {
+            amount: bigint,
+            utxos: UTxO[]
+        }
+    } = {}
+    for (let utxo of utxos) {
         const datum = await lucid.datumOf(utxo)
         const datumJSON = Data.toJson(datum)
-        if(addresses.filter((addr) => addr?.pkh === datumJSON?.beneficiary).length === 0) continue
-        formattedUtxos.push({...utxo, datum: datumJSON})
+        console.log({datumJSON})
+        if (addresses.filter((addr) => addr?.pkh === datumJSON?.beneficiary).length === 0) continue
+        formattedUtxos.push({ ...utxo, datum: datumJSON })
         totals[datumJSON?.token] = totals[datumJSON?.token] ? totals[datumJSON?.token] + BigInt(datumJSON?.amount) : BigInt(datumJSON?.amount)
-        if(datumJSON?.date > Date.now()) continue
-        claimable[datumJSON?.token] = claimable[datumJSON?.token] ? {amount: claimable[datumJSON?.token].amount + BigInt(datumJSON?.amount), utxos:[...claimable[datumJSON?.token].utxos, utxo]} : {amount:BigInt(datumJSON?.amount), utxos:[utxo]}
+        //   if(datumJSON?.date > Date.now()) continue
+        claimable[datumJSON?.token] = claimable[datumJSON?.token] ? { amount: claimable[datumJSON?.token].amount + BigInt(datumJSON?.amount), utxos: [...claimable[datumJSON?.token].utxos, utxo] } : { amount: BigInt(datumJSON?.amount), utxos: [utxo] }
     }
 
-    return {utxos:formattedUtxos, claimable, totals}
+    return { utxos: formattedUtxos, claimable, totals }
 }
