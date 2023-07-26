@@ -76,14 +76,12 @@ export function TokenAutocomplete({ field, setValue }: any) {
         <DropdownMenu open={isOpen} modal={false}  >
             <DropdownMenuTrigger className="text-left" onClick={(e) => e.preventDefault()} >
                 {/* <Button variant="outline">Open</Button> */}
-                <>
-                    <FormLabel>Token</FormLabel>
-                    <FormControl>
+                    <FormLabel >Token</FormLabel>
+                    <FormControl  className="mt-2">
                         <Input onClick={() => setIsOpen(true)} ref={inputRef} /* onClick={()=>setIsOpen(!isOpen)} */ onInput={(e) => filterTokens(e.target.value)} placeholder="Enter token name" {...field} />
 
                     </FormControl>
                    
-                </>
             </DropdownMenuTrigger>
 
             <DropdownMenuContent onInteractOutside={() => setIsOpen(false)} className="w-56">

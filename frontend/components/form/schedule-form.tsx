@@ -65,7 +65,7 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
                 <Card key={field.id} className="my-2" >
                     <>{console.log({ field })}</>
                     <CardContent className="flex flex-col space-y-4 " >
-                        <div className="flex flex-row space-x-2 justify-even items-center">
+                        <div className="flex flex-row space-x-4 justify-even items-center">
                             <FormField
                                 control={form.control}
                                 name={`items.${scheduleIndex}.schedule.${index}.token`}
