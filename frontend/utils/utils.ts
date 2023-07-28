@@ -120,7 +120,7 @@ export const getUserAddressesAndPkhs = async (walletName: string) => {
 
     })
         .filter((addr: any) => addr !== null)
-    console.log({addresses})
+    console.log({ addresses })
     return addresses
 }
 
@@ -130,20 +130,40 @@ export const getUtxosForAddresses = async (lucid: Lucid, contractAddress: string
     const formattedUtxos = []
     const totals: { [key: string]: bigint } = {}
     const claimable: {
-        [key: string]: {
-            amount: bigint,
-            utxos: UTxO[]
-        }
-    } = {}
+        assets:{
+            [key: string]: bigint
+
+        },
+        utxos: UTxO[]
+    } = {assets:{}, utxos:[]}
     for (let utxo of utxos) {
-        const datum = await lucid.datumOf(utxo)
-        const datumJSON = Data.toJson(datum)
-        console.log({datumJSON})
-        if (addresses.filter((addr) => addr?.pkh === datumJSON?.beneficiary).length === 0) continue
-        formattedUtxos.push({ ...utxo, datum: datumJSON })
-        totals[datumJSON?.token] = totals[datumJSON?.token] ? totals[datumJSON?.token] + BigInt(datumJSON?.amount) : BigInt(datumJSON?.amount)
-        //   if(datumJSON?.date > Date.now()) continue
-        claimable[datumJSON?.token] = claimable[datumJSON?.token] ? { amount: claimable[datumJSON?.token].amount + BigInt(datumJSON?.amount), utxos: [...claimable[datumJSON?.token].utxos, utxo] } : { amount: BigInt(datumJSON?.amount), utxos: [utxo] }
+        try{
+            const datum = await lucid.datumOf(utxo)
+             const datumJSON = Data.toJson(Data.from(datum))
+             //const datumJSON = Data.toJson(datum)
+            console.log({datumJSON})
+             
+             if (addresses.filter((addr) => addr?.pkh === datumJSON?.beneficiary).length === 0) continue
+             formattedUtxos.push({ ...utxo, datum: datumJSON })
+     
+             for (let assetName of Object.keys(utxo.assets)) {
+                 const amount = utxo.assets[assetName]
+                 totals[assetName] = totals[assetName] ? totals[assetName] + amount : amount
+                 if (datumJSON?.date <= Date.now()){
+                     claimable.assets[assetName] = claimable.assets[assetName] ? claimable.assets[assetName] + BigInt(amount)  : BigInt(amount)
+                 } 
+             }
+             if (datumJSON?.date <= Date.now()){
+                 claimable.utxos = [...claimable.utxos, utxo]
+             }
+     
+             // const datumJSON =  Data.toJson(datum)
+     
+        }catch(e){
+            console.log(e)
+        }
+      
+      
     }
 
     return { utxos: formattedUtxos, claimable, totals }

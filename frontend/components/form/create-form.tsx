@@ -67,17 +67,15 @@ const vestingScheduleSchema = z.object(
 
 type FormattedSchedule = {
     beneficiary: string
-    date: number,
+    date: bigint,
     token: string
     amount: number
 }
-/* const Datum = Data.Object({
-    beneficiary: Data.Literal(),
-    date: Data.Integer(),
-    token: Data.String,
-    amount: Data.BigInt,
+const Datum = Data.Object({
+    beneficiary: Data.String,
+    date: Data.BigInt,
 });
-type Datum = Data.Static<typeof Datum>; */
+type Datum = Data.Static<typeof Datum>;
 type VestingFormValues = z.infer<typeof vestingScheduleSchema>
 
 // This can come from your database or API.
@@ -154,11 +152,12 @@ export function VestingForm() {
     const formatValues = (values: VestingFormValues) => {
         const formatted: FormattedSchedule[] = []
         values.items.forEach((item) => {
-            const pkh = lucid!.utils.paymentCredentialOf(item.beneficiary).hash
+            
+            const pkh = lucid!.utils.getAddressDetails(item.beneficiary).paymentCredential!.hash //lucid!.utils.paymentCredentialOf(item.beneficiary).hash
             for (let schedule of item.schedule) {
                 const val = {
                     beneficiary: pkh,//item.beneficiary,
-                    date: schedule.freeDate.getTime(),
+                    date: BigInt(schedule.freeDate.getTime()),
                     token: schedule.token,
                     amount: schedule.amount,
                 }
@@ -166,7 +165,7 @@ export function VestingForm() {
                     for (let i = 0; i < schedule.periods!; i++) {
                         formatted.push({
                             ...val,
-                            date: new Date(Number(val.date) + schedule.periodLength! * 86400000).getTime()
+                            date: BigInt(new Date(Number(val.date) + schedule.periodLength! * 86400000).getTime())
                         })
                     }
                 } else {
@@ -184,10 +183,17 @@ export function VestingForm() {
         console.log({ formatted })
         let tx = lucid?.newTx()
         for (let receiver of formatted) {
-            const datum = Data.to(
-                Data.fromJson(receiver)
+            const {amount, token, ...rest} = receiver // remove the "amount" property from the receiver object
+            console.log({rest, receiver})
+           /*  const datum = Data.to(
+                Data.fromJson(rest)
+            ); */
+            const datum = Data.to<Datum>(
+                rest,
+                Datum
             );
-            tx!.payToContract(contractAddress, { inline: datum }, { [receiver.token]: BigInt(receiver.amount) })
+            tx!
+            tx!.payToContract(contractAddress, { inline: datum }, { [receiver.token]: BigInt(receiver.amount!) })
         }
         const txComplete = await tx?.complete()
         const signedTx = await txComplete?.sign().complete()

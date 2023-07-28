@@ -16,6 +16,7 @@ import { useContext, useEffect, useState } from "react"
 import { UserContext } from "@/pages/_app"
 import { useQuery } from "@tanstack/react-query"
 import { getUserAddressesAndPkhs, getUtxosForAddresses } from "@/utils/utils"
+import { validator } from "@/validators/validator"
 
 
 export const metadata: Metadata = {
@@ -25,19 +26,20 @@ export const metadata: Metadata = {
 
 export default function DashboardPage() {
     const { user, lucid } = useContext(UserContext)
-    const contractAddress = "addr_test1wzyjcvjr5ykjpme62gwj6agkhdecl5l6l7wm4l9gjel854s8k70mz"
     const [lucidLoaded, setLucidLoaded] = useState(false)
     const { data, error, isLoading } = useQuery(['vesting', user.walletName, user.address, lucidLoaded], async () => {
         if (user.walletName) {
             const addresses = await getUserAddressesAndPkhs(user.walletName)
             if (addresses && lucid) {
+                const contractAddress = lucid.utils.validatorToAddress(validator)
                 const utxos = await getUtxosForAddresses(lucid, contractAddress, addresses)
                 console.log(utxos)
                 return utxos
             }
         }
+        return null
     })
-
+    console.log(data)
     useEffect(() => {
         if (lucid) {
             setLucidLoaded(true)
@@ -183,11 +185,11 @@ export default function DashboardPage() {
                             <CardHeader>
                                 <CardTitle>Claimable Amounts</CardTitle>
                                 <CardDescription>
-                                    You can claim {Object.keys(data?.claimable ||{}).length} assets.
+                                    You can claim {Object.keys(data?.claimable.assets ||{}).length} assets.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <VestingList claimable={data?.claimable || {}} />
+                                <VestingList claimable={data?.claimable || {assets:{}, utxos:[]}} />
                             </CardContent>
                         </Card>
                     </div>
