@@ -1,17 +1,19 @@
 use aiken/hash.{Blake2b_224, Hash}
-use aiken/interval.{Finite}
+//  TESTS
+use aiken/interval.{Finite, Interval, IntervalBound, PositiveInfinity}
 use aiken/list.{and, or}
 use aiken/transaction.{ScriptContext, Spend, Transaction, ValidityRange}
 use aiken/transaction/credential.{VerificationKey}
 
 type Datum {
   /// POSIX time in second, e.g. 1672843961000
-  lock_until: POSIXTime,
-  /// Owner's credentials
-  owner: VerificationKeyHash,
+  date: POSIXTime,
   /// Beneficiary's credentials
   beneficiary: VerificationKeyHash,
 }
+
+// amount: Int,
+// token: ByteArray,
 
 type VerificationKeyHash =
   Hash<Blake2b_224, VerificationKey>
@@ -25,18 +27,10 @@ validator {
     // assets). Here we make sure it's only used when 'spending' from a eUTxO
     when ctx.purpose is {
       Spend(_) ->
-        or(
+        and(
           [
-            must_be_signed_by(ctx.transaction, datum.owner),
-            and(
-              [
-                must_be_signed_by(ctx.transaction, datum.beneficiary),
-                must_start_after(
-                  ctx.transaction.validity_range,
-                  datum.lock_until,
-                ),
-              ],
-            ),
+            must_be_signed_by(ctx.transaction, datum.beneficiary),
+            must_start_after(ctx.transaction.validity_range, datum.date),
           ],
         )
       _ ->
@@ -56,4 +50,16 @@ fn must_start_after(range: ValidityRange, lower_bound: POSIXTime) {
     _ ->
       False
   }
+}
+
+test must_start_after_succeed_when_lower_bound_is_after() {
+  must_start_after(interval.after(2), 1)
+}
+
+test must_start_after_succeed_when_lower_bound_is_equal() {
+  must_start_after(interval.after(2), 2)
+}
+
+test must_start_after_fail_when_lower_bound_is_after() {
+  !must_start_after(interval.after(2), 3)
 }

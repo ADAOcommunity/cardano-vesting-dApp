@@ -192,7 +192,6 @@ export function VestingForm() {
                 rest,
                 Datum
             );
-            tx!
             tx!.payToContract(contractAddress, { inline: datum }, { [receiver.token]: BigInt(receiver.amount!) })
         }
         const txComplete = await tx?.complete()
