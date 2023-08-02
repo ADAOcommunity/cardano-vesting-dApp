@@ -29,8 +29,9 @@ import { Card, CardContent, CardTitle } from "../ui/card"
 import { useContext, useEffect } from "react"
 import { UserContext } from "@/pages/_app"
 import { getAssetsFromStakeAddress } from "@/utils/utils"
-import {  Data, SpendingValidator, fromHex, toHex } from "lucid-cardano"
-import { validator } from "@/validators/validator"
+import {  Constr, Data, SpendingValidator, fromHex, toHex } from "lucid-cardano"
+import { VestingVesting } from "@/validators/plutus"
+// import { validator } from "@/validators/validator"
 
 
 
@@ -71,11 +72,11 @@ type FormattedSchedule = {
     token: string
     amount: number
 }
-const Datum = Data.Object({
+/* const Datum = Data.Object({
     beneficiary: Data.String,
     date: Data.BigInt,
 });
-type Datum = Data.Static<typeof Datum>;
+type Datum = Data.Static<typeof Datum>; */
 type VestingFormValues = z.infer<typeof vestingScheduleSchema>
 
 // This can come from your database or API.
@@ -99,6 +100,7 @@ const defaultValues: Partial<VestingFormValues> = {
 }
 
 export function VestingForm() {
+    const validator = new VestingVesting()
     const { lucid } = useContext(UserContext)
 
     const form = useForm<VestingFormValues>({
@@ -155,6 +157,7 @@ export function VestingForm() {
             
             const pkh = lucid!.utils.getAddressDetails(item.beneficiary).paymentCredential!.hash //lucid!.utils.paymentCredentialOf(item.beneficiary).hash
             for (let schedule of item.schedule) {
+                console.log({schedule})
                 const val = {
                     beneficiary: pkh,//item.beneficiary,
                     date: BigInt(schedule.freeDate.getTime()),
@@ -165,7 +168,7 @@ export function VestingForm() {
                     for (let i = 0; i < schedule.periods!; i++) {
                         formatted.push({
                             ...val,
-                            date: BigInt(new Date(Number(val.date) + schedule.periodLength! * 86400000).getTime())
+                            date: BigInt(new Date(Number(val.date) ).getTime()+ schedule.periodLength!* i * 86400000)
                         })
                     }
                 } else {
@@ -183,15 +186,21 @@ export function VestingForm() {
         console.log({ formatted })
         let tx = lucid?.newTx()
         for (let receiver of formatted) {
-            const {amount, token, ...rest} = receiver // remove the "amount" property from the receiver object
-            console.log({rest, receiver})
-           /*  const datum = Data.to(
-                Data.fromJson(rest)
-            ); */
-            const datum = Data.to<Datum>(
+           // const {amount, token, ...rest} = receiver // remove the "amount" property from the receiver object
+            const d:VestingVesting["datum"] = {
+                beneficiary: receiver.beneficiary,
+                date: BigInt(receiver.date),
+            }
+            //console.log({rest, receiver})
+            console.log({d})
+            const datum = Data.to(
+                //Data.fromJson(d)
+                new Constr(0,[receiver.beneficiary, receiver.date])
+            );
+            /* const datum = Data.to<Datum>(
                 rest,
                 Datum
-            );
+            ); */
             tx!.payToContract(contractAddress, { inline: datum }, { [receiver.token]: BigInt(receiver.amount!) })
         }
         const txComplete = await tx?.complete()

@@ -6,10 +6,10 @@ use aiken/transaction.{ScriptContext, Spend, Transaction, ValidityRange}
 use aiken/transaction/credential.{VerificationKey}
 
 type Datum {
-  /// POSIX time in second, e.g. 1672843961000
-  date: POSIXTime,
   /// Beneficiary's credentials
   beneficiary: VerificationKeyHash,
+  /// POSIX time in second, e.g. 1672843961000
+  date: POSIXTime,
 }
 
 // amount: Int,

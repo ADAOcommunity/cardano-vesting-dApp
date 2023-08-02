@@ -138,22 +138,26 @@ export const getUtxosForAddresses = async (lucid: Lucid, contractAddress: string
     } = {assets:{}, utxos:[]}
     for (let utxo of utxos) {
         try{
-            const datum = await lucid.datumOf(utxo)
-             const datumJSON = Data.toJson(Data.from(datum))
-             //const datumJSON = Data.toJson(datum)
-            console.log({datumJSON})
-             
+            const datum:Constr<any> = await lucid.datumOf(utxo)
+            console.log({datum})
+            // const datumJSON = Data.toJson(Data.from(datum))
+           // const datumJSON = Data.toJson(datum)  //for latest lucid
+            //console.log({datumJSON})
+            const datumJSON = {beneficiary:datum.fields[0], date:Number(datum.fields[1])}
+             console.log({datumJSON})
              if (addresses.filter((addr) => addr?.pkh === datumJSON?.beneficiary).length === 0) continue
              formattedUtxos.push({ ...utxo, datum: datumJSON })
      
              for (let assetName of Object.keys(utxo.assets)) {
                  const amount = utxo.assets[assetName]
                  totals[assetName] = totals[assetName] ? totals[assetName] + amount : amount
-                 if (datumJSON?.date <= Date.now()){
+                 if (datumJSON?.date < Date.now()){
+                    console.log({date: datumJSON.date})
                      claimable.assets[assetName] = claimable.assets[assetName] ? claimable.assets[assetName] + BigInt(amount)  : BigInt(amount)
                  } 
              }
-             if (datumJSON?.date <= Date.now()){
+             if (datumJSON?.date < Date.now()){
+                console.log({utxo, date: datumJSON.date})
                  claimable.utxos = [...claimable.utxos, utxo]
              }
      

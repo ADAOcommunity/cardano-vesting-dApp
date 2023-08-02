@@ -29,6 +29,7 @@ export default function VestingList({ claimable }: Props) {
       const tx = await lucid.newTx()
         .collectFrom(utxos, redeemer)
         .validFrom(Date.now())
+        .validTo(Date.now() + 1000 * 60 )
         .addSigner(user.address)
         .attachSpendingValidator(validator)
         .complete()
