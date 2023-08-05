@@ -9,5 +9,5 @@ source = "github"
 [[packages]]
 name = "aiken-lang/stdlib"
 version = "main"
-requirements = []
+requirements = ["utils"]
 source = "github"
