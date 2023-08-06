@@ -9,30 +9,12 @@ use aiken/transaction/credential.{
   VerificationKeyCredential,
 }
 use aiken/transaction/value
+use types.{Datum, POSIXTime, VerificationKeyHash}
 
 type Action {
   Mint
   Burn
 }
-
-type Datum {
-  /// Beneficiary's credentials
-  beneficiary: VerificationKeyHash,
-  /// POSIX time in second, e.g. 1672843961000
-  date: POSIXTime,
-  /// The amount of tokens to be required for cancellation.
-  tokens_required: Int,
-  /// The organizations token policy id.
-  org_token: value.PolicyId,
-  /// The beacon token policy id.
-  beacon_token: value.PolicyId,
-}
-
-type VerificationKeyHash =
-  Hash<Blake2b_224, VerificationKey>
-
-type POSIXTime =
-  Int
 
 validator(token_name: ByteArray, utxo_ref: OutputReference) {
   fn org_token(rdmr: Action, ctx: ScriptContext) -> Bool {
