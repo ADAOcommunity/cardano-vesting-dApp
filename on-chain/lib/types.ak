@@ -5,6 +5,11 @@ use aiken/transaction/credential.{
 }
 use aiken/transaction/value
 
+pub type Action {
+  Mint
+  Burn
+}
+
 pub type Datum {
   /// Beneficiary's credentials
   beneficiary: VerificationKeyHash,
