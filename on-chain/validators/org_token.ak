@@ -1,8 +1,12 @@
 use aiken/dict
+use aiken/hash.{Blake2b_224, Hash}
 use aiken/list
-use aiken/transaction.{OutputReference, ScriptContext, Transaction} as tx
+use aiken/transaction.{
+  DatumHash, InlineDatum, NoDatum, OutputReference, ScriptContext, Transaction,
+} as tx
 use aiken/transaction/credential.{
-  Address, Credential, Inline, ScriptCredential, VerificationKeyCredential,
+  Address, Credential, Inline, ScriptCredential, VerificationKey,
+  VerificationKeyCredential,
 }
 use aiken/transaction/value
 
@@ -10,6 +14,25 @@ type Action {
   Mint
   Burn
 }
+
+type Datum {
+  /// Beneficiary's credentials
+  beneficiary: VerificationKeyHash,
+  /// POSIX time in second, e.g. 1672843961000
+  date: POSIXTime,
+  /// The amount of tokens to be required for cancellation.
+  tokens_required: Int,
+  /// The organizations token policy id.
+  org_token: value.PolicyId,
+  /// The beacon token policy id.
+  beacon_token: value.PolicyId,
+}
+
+type VerificationKeyHash =
+  Hash<Blake2b_224, VerificationKey>
+
+type POSIXTime =
+  Int
 
 validator(token_name: ByteArray, utxo_ref: OutputReference) {
   fn org_token(rdmr: Action, ctx: ScriptContext) -> Bool {
@@ -44,6 +67,20 @@ pub fn address_from_scripthash(script_hash: ByteArray, stake_hash: ByteArray) {
   }
 }
 
+fn convert_datum(datum: tx.Datum) -> Datum {
+  when datum is {
+    NoDatum ->
+      error
+    DatumHash(_) ->
+      error
+    InlineDatum(d) -> {
+      expect return_datum: Datum =
+        d
+      return_datum
+    }
+  }
+}
+
 // requires token_name equvialent to org token policy_id, AND the script hash of the spending validator as parameter
 // in order to be minted it must be minted 1 token max per output within the the validator script, the datum must include both the beacon policy, as well as the org policy, the org policy must be used as the token name of the org policy.
 validator(script_hash: ByteArray, stake_hash: ByteArray) {
@@ -60,40 +97,47 @@ validator(script_hash: ByteArray, stake_hash: ByteArray) {
     let Transaction { inputs, outputs, mint, .. } =
       transaction
 
-    expect script_outputs =
+    let script_outputs =
       list.filter(outputs, fn(output) { output.address == script_address })
+    let outputs_with_beacon =
+      list.filter(
+        outputs,
+        fn(output) {
+          list.has(dict.keys(value.to_dict(output.value)), policy_id)
+        },
+      )
 
-    let is_correct_script_outputs =
+    let is_correct_outputs =
       list.all(
-        script_outputs,
+        outputs_with_beacon,
         fn(output) {
           expect [(asset_name, amount)] =
             output.value
               |> value.tokens(policy_id)
               |> dict.to_list()
-          amount == 1
+          expect Datum { org_token, beacon_token, .. } =
+            convert_datum(output.datum)
+          output.address == script_address && amount == 1 && org_token == asset_name && beacon_token == policy_id
         },
       )
-    expect non_script_outputs =
-      list.filter(outputs, fn(output) { output.address != script_address })
 
-    let is_correct_non_script_outputs =
+    let no_tokens_leave_tx =
       list.all(
-        script_outputs,
+        outputs,
         fn(output) {
-          expect asset_list =
+          let assets =
             output.value
               |> value.tokens(policy_id)
               |> dict.to_list()
-          list.length(asset_list) == 0
+          assets == []
         },
       )
 
     when rdmr is {
       Mint ->
-        is_correct_script_outputs && is_correct_non_script_outputs
+        is_correct_outputs
       Burn ->
-        True
+        no_tokens_leave_tx
     }
   }
 }
