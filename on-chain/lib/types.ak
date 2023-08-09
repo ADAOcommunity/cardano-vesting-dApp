@@ -25,8 +25,10 @@ pub type Datum {
   period_length: Int,
   /// Amount per period
   amount_per_period: Int,
+  ///policy id of the vested token
+  token_policy_id: ByteArray,
   /// Name of the vested token
-  token_name: String,
+  token_name: ByteArray,
   /// Amount of tokens that have already been withdrawn. Necessary to calculate the amount of tokens remaining to be been claimed
   withdrawn_amount: Int,
 }
