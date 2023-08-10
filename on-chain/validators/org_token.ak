@@ -1,3 +1,5 @@
+//// contract to mint organization tokens. This is a one-shot policy based on the utxo_ref
+
 use aiken/dict
 use aiken/list
 use aiken/transaction.{OutputReference, ScriptContext, Transaction} as tx
@@ -9,6 +11,7 @@ type Action {
 }
 
 validator(token_name: ByteArray, utxo_ref: OutputReference) {
+  /// mint org token
   fn org_token(rdmr: Action, ctx: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } =
       ctx

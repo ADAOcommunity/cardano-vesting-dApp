@@ -8,6 +8,8 @@ pub type Action {
 }
 
 pub type Datum {
+  /// datum id to avoid double satisfaction
+  datum_id: ByteArray,
   /// Beneficiary's credentials
   beneficiary: VerificationKeyHash,
   /// POSIX time in second for when the vesting schedule starts, e.g. 1672843961000
