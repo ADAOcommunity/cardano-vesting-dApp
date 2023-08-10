@@ -54,14 +54,6 @@ validator(beacon_policy: ByteArray) {
     let withdrawable_amount =
       calculate_withdrawable_amount(transaction_start, converted_datum)
 
-    if amount_to_beneficiary > withdrawable_amount {
-      error
-    } else if amount_to_beneficiary == withdrawable_amount {
-      todo
-    } else {
-      let new_datum =
-        update_datum(converted_datum, amount_to_beneficiary)
-    }
     let no_tokens_leave_tx =
       list.all(
         outputs,
@@ -75,7 +67,17 @@ validator(beacon_policy: ByteArray) {
       )
     when rdmr is {
       Claim ->
-        todo
+        if amount_to_beneficiary == withdrawable_amount {
+          True
+        } else {
+          let new_datum =
+            update_datum(converted_datum, amount_to_beneficiary)
+          if amount_to_beneficiary > withdrawable_amount {
+            todo
+          } else {
+            todo
+          }
+        }
       Cancel ->
         todo
     }
