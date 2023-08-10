@@ -28,7 +28,7 @@ validator(beacon_policy: ByteArray) {
     let withdrawable_amount =
       calculate_withdrawable_amount(ctx, converted_datum, output_reference)
 
-    let no_tokens_leave_tx =
+    let no_tokens_leave_tx: Bool =
       list.all(
         outputs,
         fn(output) {
@@ -39,11 +39,22 @@ validator(beacon_policy: ByteArray) {
           assets == []
         },
       )
+    let org_tokens_present: Bool =
+      list.all(
+        outputs,
+        fn(output) {
+          let assets =
+            output.value
+              |> value.tokens(converted_datum.org_token)
+              |> dict.to_list()
+          list.length(assets) >= converted_datum.tokens_required
+        },
+      )
     when rdmr is {
       Claim ->
-        amount_to_beneficiary <= withdrawable_amount
+        amount_to_beneficiary <= withdrawable_amount && no_tokens_leave_tx
       Cancel ->
-        todo
+        org_tokens_present
     }
   }
 }
