@@ -10,7 +10,7 @@ type Action {
   Cancel
 }
 
-validator(beacon_policy: ByteArray) {
+validator {
   fn vesting(datum: tx.Datum, rdmr: Action, ctx: ScriptContext) -> Bool {
     let ScriptContext { transaction, purpose } =
       ctx
@@ -34,7 +34,7 @@ validator(beacon_policy: ByteArray) {
         fn(output) {
           let assets =
             output.value
-              |> value.tokens(beacon_policy)
+              |> value.tokens(converted_datum.beacon_token)
               |> dict.to_list()
           assets == []
         },

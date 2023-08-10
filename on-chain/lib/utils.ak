@@ -54,6 +54,7 @@ pub fn value_sent_to_scripthash(
   )
 }
 
+/// gets the value sent to a scripthash with a datum
 pub fn value_sent_to_scripthash_with_datum(
   tx: Transaction,
   scripthash: ScriptHash,
@@ -77,15 +78,17 @@ pub fn value_sent_to_scripthash_with_datum(
   )
 }
 
+// gets the value sent to an address or returns zero if nothing was sent to it
 pub fn value_sent_to_address(tx: Transaction, address: Address) -> Value {
   when list.filter(tx.outputs, fn(output) { output.address == address }) is {
     [output] ->
       output.value
     _ ->
-      error
+      zero()
   }
 }
 
+// gets the value sent to a pubkeyhash or returns zero if nothing was sent to it
 pub fn value_sent_to_pubkeyhash(
   tx: Transaction,
   pubkeyhash: VerificationKeyHash,
@@ -109,11 +112,12 @@ pub fn value_sent_to_pubkeyhash(
   }
 }
 
+/// gets the amount of a specific token from a value
 pub fn token_amount_from_value(
   val: Value,
   asset_policy: ByteArray,
   asset_name: ByteArray,
-) {
+) -> Int {
   expect [(name, amount)] =
     val
       |> value.tokens(asset_policy)
