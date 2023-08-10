@@ -1,10 +1,8 @@
 use aiken/dict
 use aiken/list
-use aiken/transaction.{
-  DatumHash, InlineDatum, NoDatum, OutputReference, ScriptContext, Transaction,
-} as tx
+use aiken/transaction.{ScriptContext, Transaction} as tx
 use aiken/transaction/value
-use types.{Datum, VerificationKeyHash}
+use types.{Datum}
 use utils.{address_from_scripthash, convert_datum}
 
 type Action {
@@ -25,11 +23,8 @@ validator(script_hash: ByteArray, stake_hash: ByteArray) {
     expect tx.Mint(policy_id) =
       purpose
 
-    let Transaction { inputs, outputs, mint, .. } =
+    let Transaction { outputs, mint, .. } =
       transaction
-
-    let script_outputs =
-      list.filter(outputs, fn(output) { output.address == script_address })
     let outputs_with_beacon =
       list.filter(
         outputs,

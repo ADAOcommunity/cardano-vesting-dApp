@@ -1,16 +1,15 @@
 use aiken/dict
+use aiken/interval.{Finite, NegativeInfinity, PositiveInfinity}
 use aiken/list
 use aiken/transaction.{
   DatumHash, InlineDatum, NoDatum, Output, OutputReference, ScriptContext,
   Transaction,
 } as tx
 use aiken/transaction/credential.{
-  Address, Credential, Inline, PaymentCredential, ScriptCredential,
-  VerificationKey, VerificationKeyCredential, from_verification_key,
+  Address, Inline, PaymentCredential, ScriptCredential,
+  VerificationKeyCredential, from_verification_key,
 }
-use aiken/transaction/value.{
-  AssetName, PolicyId, Value, add, from_asset, merge, quantity_of, zero,
-}
+use aiken/transaction/value.{Value, merge, zero}
 use types.{Datum, POSIXTime, ScriptHash, VerificationKeyHash}
 
 /// function to convert validator script hash into validator address
@@ -95,9 +94,9 @@ pub fn value_sent_to_pubkeyhash(
     list.filter(
       tx.outputs,
       fn(output) {
-        expect cred: PaymentCredential =
+        let cred: PaymentCredential =
           output.address.payment_credential
-        expect pay_addr: Address =
+        let pay_addr: Address =
           Address { payment_credential: cred, stake_credential: None }
         pay_addr == from_verification_key(pubkeyhash)
       },
@@ -106,7 +105,7 @@ pub fn value_sent_to_pubkeyhash(
     [output] ->
       output.value
     _ ->
-      error
+      zero()
   }
 }
 
@@ -145,7 +144,7 @@ pub fn value_sent_to_with_datum(
     [output] ->
       output.value
     _ ->
-      error
+      zero()
   }
 }
 
@@ -187,30 +186,90 @@ fn signed_with_input(tx: Transaction, scripthash: ScriptHash) -> Bool {
   }
 }
 
+/// calculates how much of the tokens are still locked in the schedule and available to withdraw to this date
 pub fn calculate_withdrawable_amount(
-  transaction_date: POSIXTime,
+  ctx: ScriptContext,
   datum: Datum,
+  out_ref: OutputReference,
 ) -> Int {
+  let transaction_start: POSIXTime =
+    when ctx.transaction.validity_range.lower_bound.bound_type is {
+      Finite(time) ->
+        time
+      PositiveInfinity ->
+        error
+      NegativeInfinity ->
+        error
+    }
   let time_passed =
-    transaction_date - datum.date
+    transaction_start - datum.date
   let periods_passed =
     time_passed / datum.period_length
+  let withdrawn_amount =
+    get_withdrawn_amount(datum, ctx)
   let total_withdrawable =
     periods_passed * datum.amount_per_period
-  total_withdrawable - datum.withdrawn_amount
+  total_withdrawable - withdrawn_amount
 }
 
-pub fn update_datum(datum: Datum, sent_to_beneficiary: Int) -> Datum {
-  // get beneficiary address from datum. Needed function to get value sent to payment key hash instead of addresss??
-  // get value sent to beneficiary address
-  // calculate difference between value sent to beneficiary address and value sent to contract
-  // add difference to datum field named "withdrawn_amount", keep the other fields the same
-  // return updated datum
-  let withdrawn_to_date: Int =
-    datum.withdrawn_amount
-  let new_withdrawn: Int =
-    withdrawn_to_date + sent_to_beneficiary
-  let new_datum =
-    Datum { ..datum, withdrawn_amount: new_withdrawn }
-  new_datum
+/// gets the total amount of a token vested on that UTxO based on the period length, amount per period and number of periods
+pub fn get_total_vested(datum: Datum) -> Int {
+  datum.period_length * datum.amount_per_period * datum.num_periods
+}
+
+/// gets the amount of tokens that have already been withdrawn from the schedule
+pub fn get_withdrawn_amount(datum: Datum, ctx: ScriptContext) -> Int {
+  let total =
+    get_total_vested(datum)
+  let remaining =
+    get_locked_amount(ctx, datum.token_policy_id, datum.token_name)
+  total - remaining
+}
+
+/// gets the amount of tokens currently locked in the input that is being unlocked
+pub fn get_locked_amount(
+  ctx: ScriptContext,
+  policy_id: ByteArray,
+  asset_name: ByteArray,
+) -> Int {
+  expect tx.Spend(out_ref) =
+    ctx.purpose
+  expect Some(input) =
+    list.find(
+      ctx.transaction.inputs,
+      fn(input) { input.output_reference == out_ref },
+    )
+  token_amount_from_value(input.output.value, policy_id, asset_name)
+}
+
+/// gets the amount of tokens being unlocked based on how much is being sent to the beneficiary address and amount locked backed to the contract with the same dautm
+pub fn get_requested_amount(ctx: ScriptContext, datum: tx.Datum) -> Int {
+  let Datum { beneficiary, token_policy_id, token_name, .. } =
+    convert_datum(datum)
+  let transaction =
+    ctx.transaction
+  let value_to_beneficiary =
+    value_sent_to_pubkeyhash(transaction, beneficiary)
+  let amount_to_beneficiary =
+    token_amount_from_value(value_to_beneficiary, token_policy_id, token_name)
+  let contract_address =
+    get_contract_address(ctx)
+
+  let value_to_contract =
+    value_sent_to_with_datum(transaction, contract_address, datum)
+  let amount_to_contract =
+    token_amount_from_value(value_to_contract, token_policy_id, token_name)
+  amount_to_beneficiary - amount_to_contract
+}
+
+/// gets the contract address from the input being unlocked
+pub fn get_contract_address(ctx: ScriptContext) -> Address {
+  expect tx.Spend(output_reference) =
+    ctx.purpose
+  expect Some(input) =
+    list.find(
+      ctx.transaction.inputs,
+      fn(input) { input.output_reference == output_reference },
+    )
+  input.output.address
 }

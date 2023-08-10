@@ -1,9 +1,6 @@
 use aiken/dict
-use aiken/hash.{Blake2b_224, Hash}
 use aiken/list
-use aiken/transaction.{
-  DatumHash, InlineDatum, NoDatum, OutputReference, ScriptContext, Transaction,
-} as tx
+use aiken/transaction.{OutputReference, ScriptContext, Transaction} as tx
 use aiken/transaction/value
 
 type Action {
