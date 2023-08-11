@@ -9,7 +9,7 @@ export default function Create() {
 
     return (
         <>
-            <Layout>
+            <Layout title={"Create Schedule"} description={"Create a vesting schedule"} >
                 <div>
                     <VestingForm />
                 </div>

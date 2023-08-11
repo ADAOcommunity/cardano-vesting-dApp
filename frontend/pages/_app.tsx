@@ -58,7 +58,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
 
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+    <ThemeProvider attribute="class" defaultTheme="dark" >
       <QueryClientProvider client={queryClient}>
         <UserContext.Provider value={{ user, setUser, lucid }}>
           <Component {...pageProps} />

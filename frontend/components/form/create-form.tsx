@@ -29,7 +29,7 @@ import { Card, CardContent, CardTitle } from "../ui/card"
 import { useContext, useEffect } from "react"
 import { UserContext } from "@/pages/_app"
 import { getAssetsFromStakeAddress } from "@/utils/utils"
-import {  Constr, Data, SpendingValidator, fromHex, toHex } from "lucid-cardano"
+import { Constr, Data, SpendingValidator, fromHex, toHex } from "lucid-cardano"
 import { VestingVesting } from "@/validators/plutus"
 // import { validator } from "@/validators/validator"
 
@@ -43,10 +43,10 @@ const vestingScheduleSchema = z.object(
                     .string()
                     .min(2, {
                         message: "Address must be specified",
-                    }), 
-                   /*  .max(30, {
-                        message: "Username must not be longer than 30 characters.",
-                    }), */
+                    }),
+                /*  .max(30, {
+                     message: "Username must not be longer than 30 characters.",
+                 }), */
                 schedule: z
                     .array(
                         z.object({
@@ -63,14 +63,18 @@ const vestingScheduleSchema = z.object(
             })
         )
     }
-)   
+)
 
 
 type FormattedSchedule = {
     beneficiary: string
     date: bigint,
-    token: string
+    token_name: string
     amount: number
+    tokens_required: number
+    token_policy_id: string
+    period_length: number
+    periods: number
 }
 /* const Datum = Data.Object({
     beneficiary: Data.String,
@@ -154,58 +158,69 @@ export function VestingForm() {
     const formatValues = (values: VestingFormValues) => {
         const formatted: FormattedSchedule[] = []
         values.items.forEach((item) => {
-            
+
             const pkh = lucid!.utils.getAddressDetails(item.beneficiary).paymentCredential!.hash //lucid!.utils.paymentCredentialOf(item.beneficiary).hash
             for (let schedule of item.schedule) {
-                console.log({schedule})
-                const val = {
+                console.log({ schedule })
+                let val = {
                     beneficiary: pkh,//item.beneficiary,
                     date: BigInt(schedule.freeDate.getTime()),
-                    token: schedule.token,
+                    token_name: schedule.token.slice(56),
                     amount: schedule.amount,
+                    tokens_required: 1, //org tokens required to unlock
+                    token_policy_id: schedule.token.slice(0, 56),
+                    period_length: 0,
+                    periods: 1
                 }
                 if (schedule.periodical) {
-                    for (let i = 0; i < schedule.periods!; i++) {
-                        formatted.push({
-                            ...val,
-                            date: BigInt(new Date(Number(val.date) ).getTime()+ schedule.periodLength!* i * 86400000)
-                        })
-                    }
-                } else {
-                    formatted.push(val)
+                    val["period_length"] = schedule.periodLength || 0
+                    val["periods"] = schedule.periods || 0
                 }
+                formatted.push(val)
+
             }
         })
         return formatted
     }
 
     const createTx = async (values: VestingFormValues) => {
-        const contractAddress=lucid!.utils.validatorToAddress(validator)
+        const contractAddress = lucid!.utils.validatorToAddress(validator)
 
         const formatted = formatValues(values)
         console.log({ formatted })
         let tx = lucid?.newTx()
         for (let receiver of formatted) {
-           // const {amount, token, ...rest} = receiver // remove the "amount" property from the receiver object
-            const d:VestingVesting["datum"] = {
+            // const {amount, token, ...rest} = receiver // remove the "amount" property from the receiver object
+            const d: VestingVesting["datum"] = {
+                datumId: "123",
                 beneficiary: receiver.beneficiary,
                 date: BigInt(receiver.date),
+                tokensRequired: BigInt(receiver.tokens_required),
+                orgToken: "123",
+                beaconToken: "123",
+                numPeriods: BigInt(receiver.periods),
+                periodLength: BigInt(receiver.period_length),
+                amountPerPeriod: BigInt(receiver.amount),
+                tokenPolicyId: receiver.token_policy_id,
+                tokenName: receiver.token_name,
             }
             //console.log({rest, receiver})
-            console.log({d})
-            const datum = Data.to(
+            console.log({ d })
+            /* const datum = Data.to(
                 //Data.fromJson(d)
-                new Constr(0,[receiver.beneficiary, receiver.date])
-            );
+                new Constr(0, [receiver.beneficiary, receiver.date])
+            ); */   
+
+            const datum = Data.to(d, VestingVesting["datum"])
             /* const datum = Data.to<Datum>(
                 rest,
                 Datum
             ); */
-            tx!.payToContract(contractAddress, { inline: datum }, { [receiver.token]: BigInt(receiver.amount!) })
+            tx!.payToContract(contractAddress, { inline: datum }, { [receiver.token_policy_id+receiver.token_name]: BigInt(receiver.amount!) })
         }
         const txComplete = await tx?.complete()
         const signedTx = await txComplete?.sign().complete()
-        const txHash= await signedTx?.submit()
+        const txHash = await signedTx?.submit()
         return txHash
     }
 
