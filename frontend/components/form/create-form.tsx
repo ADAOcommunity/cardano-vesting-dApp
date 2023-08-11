@@ -30,7 +30,8 @@ import { useContext, useEffect } from "react"
 import { UserContext } from "@/pages/_app"
 import { getAssetsFromStakeAddress } from "@/utils/utils"
 import { Constr, Data, SpendingValidator, fromHex, toHex } from "lucid-cardano"
-import { VestingVesting } from "@/validators/plutus"
+import { BeaconBeaconToken, VestingVesting } from "@/validators/plutus"
+import { useRouter } from "next/router"
 // import { validator } from "@/validators/validator"
 
 
@@ -106,6 +107,9 @@ const defaultValues: Partial<VestingFormValues> = {
 export function VestingForm() {
     const validator = new VestingVesting()
     const { lucid } = useContext(UserContext)
+    
+    const router = useRouter()
+    const { orgPolicy } = router.query
 
     const form = useForm<VestingFormValues>({
         resolver: zodResolver(vestingScheduleSchema),
@@ -184,20 +188,32 @@ export function VestingForm() {
     }
 
     const createTx = async (values: VestingFormValues) => {
-        const contractAddress = lucid!.utils.validatorToAddress(validator)
-
+        const myAddress = "addr_test1qrsaj9wppjzqq9aa8yyg4qjs0vn32zjr36ysw7zzy9y3xztl9fadz30naflhmq653up3tkz275gh5npdejwjj23l0rdquxfsdj"
+        const myAddressDetails = lucid?.utils.getAddressDetails(myAddress)
+        const stakeCredential = myAddressDetails?.stakeCredential
+        const contractAddress = lucid!.utils.validatorToAddress(validator, stakeCredential)
+        const validatorHash = lucid!.utils.validatorToScriptHash(validator)
+        const beaconPolicy = new BeaconBeaconToken(validatorHash, stakeCredential!.hash )
+        const beaconPolicyId = lucid!.utils.mintingPolicyToId(beaconPolicy)
+        const mintRedeemer = Data.to(new Constr(0, []));
         const formatted = formatValues(values)
+        const utxos = await lucid?.utxosAt(await lucid.wallet.address())
+        const utxo = utxos![0]
+        const beaconName = orgPolicy//Buffer.from(orgPolicy as string, "hex").toString("hex") //toHex(Buffer.from("caca", "utf8"))//toHex(Buffer.from(beaconPolicyId, "utf8"))
+        console.log({beaconName})
         console.log({ formatted })
         let tx = lucid?.newTx()
+        .collectFrom([utxo])
+        .attachMintingPolicy(beaconPolicy)
         for (let receiver of formatted) {
             // const {amount, token, ...rest} = receiver // remove the "amount" property from the receiver object
             const d: VestingVesting["datum"] = {
-                datumId: "123",
+                datumId: utxo.txHash+toHex(Buffer.from(utxo.outputIndex.toString(), "utf8")),
                 beneficiary: receiver.beneficiary,
                 date: BigInt(receiver.date),
                 tokensRequired: BigInt(receiver.tokens_required),
-                orgToken: "123",
-                beaconToken: "123",
+                orgToken: orgPolicy as string,
+                beaconToken: beaconPolicyId,
                 numPeriods: BigInt(receiver.periods),
                 periodLength: BigInt(receiver.period_length),
                 amountPerPeriod: BigInt(receiver.amount),
@@ -210,14 +226,15 @@ export function VestingForm() {
                 //Data.fromJson(d)
                 new Constr(0, [receiver.beneficiary, receiver.date])
             ); */   
-
-            const datum = Data.to(d, VestingVesting["datum"])
-            /* const datum = Data.to<Datum>(
-                rest,
-                Datum
-            ); */
-            tx!.payToContract(contractAddress, { inline: datum }, { [receiver.token_policy_id+receiver.token_name]: BigInt(receiver.amount!) })
+            const datumVals = Object.values(d)
+            console.log({datumVals})    
+            const datum = Data.to(new Constr(0,datumVals))
+           // const datum = Data.to(Data.fromJson(d))
+            
+            tx = tx!.payToContract(contractAddress, { inline: datum }, { [receiver.token_policy_id+receiver.token_name]: BigInt(receiver.amount!*receiver.periods), [beaconPolicyId+orgPolicy]: BigInt(1) })
         }
+        tx= tx?.mintAssets({[beaconPolicyId+orgPolicy]: BigInt(formatted.length)}, mintRedeemer)
+        console.log(await tx?.toString())
         const txComplete = await tx?.complete()
         const signedTx = await txComplete?.sign().complete()
         const txHash = await signedTx?.submit()

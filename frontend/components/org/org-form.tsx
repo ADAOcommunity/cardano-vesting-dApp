@@ -68,6 +68,7 @@ export function OrgForm() {
 
     async function onSubmit(data: OrgFormValues) {
         console.log("submit")
+        console.log({data})
         const txHash = await createTx(data)
         console.log({ txHash })
         toast({
@@ -93,11 +94,20 @@ export function OrgForm() {
     const createTx = async (values: OrgFormValues) => {
         const utxos = await lucid?.wallet.getUtxos()
         const utxo = utxos![0]
-        const validator = new OrgTokenOrgToken("", { transactionId: { hash: utxo.txHash }, outputIndex: BigInt(utxo.outputIndex) })
-
+        const name = toHex(Buffer.from("orgToken", "utf8"))
+        console.log({utxo})
+        const validator = new OrgTokenOrgToken(name, { transactionId: { hash: utxo.txHash }, outputIndex: BigInt(utxo.outputIndex) })
+        const policyId = lucid!.utils.mintingPolicyToId(validator)
+        console.log({policyId})
         const contractAddress = lucid!.utils.validatorToAddress(validator)
-
-        const tx = lucid!.newTx()
+        const mintRedeemer = Data.to(new Constr(0, []));
+        let tx = lucid!.newTx()
+        .collectFrom([utxo])
+        for(let address of values.items) {
+            tx = tx.payToAddress(address, {[policyId+name]: BigInt(1)})
+        }
+        tx = tx.attachMintingPolicy(validator)
+        .mintAssets({[policyId+name]: BigInt(values.items.length)}, mintRedeemer)
         const txComplete = await tx?.complete()
         const signedTx = await txComplete?.sign().complete()
         const txHash = await signedTx?.submit()
