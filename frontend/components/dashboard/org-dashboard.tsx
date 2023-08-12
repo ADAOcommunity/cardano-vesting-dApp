@@ -15,7 +15,7 @@ import Overview from "./Overview"
 import { useContext, useEffect, useState } from "react"
 import { UserContext } from "@/pages/_app"
 import { useQuery } from "@tanstack/react-query"
-import { getOrgDatumsAndAmount, getUserAddressesAndPkhs, getUtxosForAddresses } from "@/utils/utils"
+import { getOrgDatumsAndAmount, getOrgStats, getUserAddressesAndPkhs, getUtxosForAddresses } from "@/utils/utils"
 import { useRouter } from "next/router"
 import { BeaconBeaconToken, VestingVesting } from "@/validators/plutus"
 import { Data, toHex, UTxO } from "lucid-cardano"
@@ -35,6 +35,9 @@ export default function OrgDashboard() {
         if (orgPolicy && lucidLoaded) {
             const orgDatums = await getOrgDatumsAndAmount(lucid!, orgPolicy as string)
             console.log({orgDatums})
+            const orgStats = await getOrgStats(lucid!, orgPolicy as string)
+            console.log({orgStats})
+            return { orgDatums, orgStats }
         }
         return null
     })
@@ -184,11 +187,11 @@ export default function OrgDashboard() {
                             <CardHeader>
                                 <CardTitle>Claimable Amounts</CardTitle>
                                 <CardDescription>
-                                    You can claim {Object.keys(data?.claimable.assets || {}).length} assets.
+                                    {/* You can claim {Object.keys(data?.claimable.assets || {}).length} assets. */}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <VestingList claimable={data?.claimable || { assets: {}, utxos: [] }} />
+                                {/* <VestingList claimable={data?.claimable || { assets: {}, utxos: [] }} /> */}
                             </CardContent>
                         </Card>
                     </div>
