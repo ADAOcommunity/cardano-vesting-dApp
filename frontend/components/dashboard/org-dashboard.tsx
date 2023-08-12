@@ -37,7 +37,7 @@ export default function OrgDashboard() {
             console.log({orgDatums})
             const orgStats = await getOrgStats(lucid!, orgPolicy as string)
             console.log({orgStats})
-            return { orgDatums, orgStats }
+            return { orgStats }
         }
         return null
     })
@@ -185,7 +185,7 @@ export default function OrgDashboard() {
                         </Card>
                         <Card className="col-span-3">
                             <CardHeader>
-                                <CardTitle>Claimable Amounts</CardTitle>
+                                <CardTitle>Beneficiaries</CardTitle>
                                 <CardDescription>
                                     {/* You can claim {Object.keys(data?.claimable.assets || {}).length} assets. */}
                                 </CardDescription>
