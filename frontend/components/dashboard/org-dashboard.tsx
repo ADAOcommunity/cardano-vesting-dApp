@@ -19,6 +19,7 @@ import { getOrgDatumsAndAmount, getOrgStats, getUserAddressesAndPkhs, getUtxosFo
 import { useRouter } from "next/router"
 import { BeaconBeaconToken, VestingVesting } from "@/validators/plutus"
 import { Data, toHex, UTxO } from "lucid-cardano"
+import BeneficiariesList from "../org/beneficiaries-list"
 
 export const metadata: Metadata = {
     title: "Dashboard",
@@ -191,6 +192,7 @@ export default function OrgDashboard() {
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
+                                <BeneficiariesList beneficiaries={data?.orgStats.beneficiaries || {}} />
                                 {/* <VestingList claimable={data?.claimable || { assets: {}, utxos: [] }} /> */}
                             </CardContent>
                         </Card>
