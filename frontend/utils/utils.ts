@@ -198,3 +198,86 @@ export const evenDigits = (n: number) => {
     let str = n.toString();
     return str.length % 2 === 0 ? str : '0' + str;
 }
+export const getOrgStats = async (lucid: Lucid, orgPolicy: string) => {
+    const vestingValidator = new VestingVesting()
+    const myAddress = "addr_test1qrsaj9wppjzqq9aa8yyg4qjs0vn32zjr36ysw7zzy9y3xztl9fadz30naflhmq653up3tkz275gh5npdejwjj23l0rdquxfsdj"
+    const myAddressDetails = lucid?.utils.getAddressDetails(myAddress)
+    const stakeCredential = myAddressDetails?.stakeCredential
+    const beaconPolicy = new BeaconBeaconToken(lucid!.utils.validatorToScriptHash(vestingValidator), stakeCredential!.hash)
+    const beaconPolicyId = lucid!.utils.mintingPolicyToId(beaconPolicy)
+    const contractAddress = lucid!.utils.validatorToAddress(vestingValidator, stakeCredential)
+    let orgUtxos = await lucid!.utxosAtWithUnit(contractAddress, beaconPolicyId + orgPolicy)
+    console.log({ orgUtxos })
+    let stats: Stats = { beneficiaries: {}, totals: {} }
+    const datums = orgUtxos.filter((utxo: UTxO) => utxo.datum !== null).forEach((utxo: UTxO) => {
+        const datum = Data.from(utxo.datum as string, VestingVesting.datum)
+        console.log({datum})
+        const assetName = datum.tokenPolicyId+datum.tokenName;
+        const tokenAmount= utxo.assets[datum.tokenPolicyId+datum.tokenName] // amount of tokens remaining in the UTxO
+        const totalVested = datum.amountPerPeriod * datum.numPeriods;
+        const withdrawn = totalVested - tokenAmount;
+        const remaining = totalVested - withdrawn;
+        const withdrawablePeriods = calculateWithdrawablePeriods(datum.periodLength, datum.date) 
+        const withdrawableToDate = withdrawablePeriods > 0 ? BigInt(withdrawablePeriods) * datum.amountPerPeriod : BigInt(0);
+        const redeemable = withdrawableToDate - withdrawn; // amount withdrawable to date discounting what has already been withdrawn
+        let utxos: UTxO[] = [utxo]
+        // Populate beneficiaries
+        if (!stats.beneficiaries[datum.beneficiary]) {
+            stats.beneficiaries[datum.beneficiary] = {};
+        }else{
+            utxos = stats.beneficiaries[datum.beneficiary][assetName]?.utxos ? [...stats.beneficiaries[datum.beneficiary][assetName].utxos, utxo] : [utxo]
+        }
+        stats.beneficiaries[datum.beneficiary][assetName] = {
+            totalVested,
+            redeemable,
+            withdrawn,
+            remaining,
+            withdrawablePeriods,
+            utxos
+        };
+
+        // Populate totals
+        if (!stats.totals[assetName]) {
+            stats.totals[assetName] = {
+                totalVested: BigInt(0),
+                redeemable: BigInt(0),
+                withdrawn: BigInt(0),
+                remaining: BigInt(0)
+            };
+        }
+        stats.totals[assetName].totalVested += totalVested;
+        stats.totals[assetName].redeemable += redeemable;
+        stats.totals[assetName].withdrawn += withdrawn;
+        stats.totals[assetName].remaining += remaining;
+    })
+    return stats
+}
+
+const calculateWithdrawablePeriods = (periodLength: bigint, startDate:bigint) =>{
+    const periodMs = Number(periodLength)*24*60*60*1000
+    console.log({periodMs})
+    const withdrawablePeriods = Date.now() > Number(startDate)+periodMs ?  Math.floor((Date.now() - Number(startDate)) / periodMs) : 0;
+    return withdrawablePeriods
+}
+type Stats = {
+    beneficiaries: {
+        [key: string]: { //beneficiary
+            [key: string]: {  // asset name of vested token
+                totalVested: bigint,
+                withdrawablePeriods: number,
+                redeemable: bigint,
+                withdrawn: bigint,
+                remaining: bigint,
+                utxos: UTxO[]
+            }
+        }
+    },
+    totals: {
+        [key: string]: {  // asset name of vested token
+            totalVested: bigint,
+            redeemable: bigint,
+            withdrawn: bigint,
+            remaining: bigint,
+        }
+    }
+}

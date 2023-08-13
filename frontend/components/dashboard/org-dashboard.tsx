@@ -15,10 +15,11 @@ import Overview from "./Overview"
 import { useContext, useEffect, useState } from "react"
 import { UserContext } from "@/pages/_app"
 import { useQuery } from "@tanstack/react-query"
-import { getOrgDatumsAndAmount, getUserAddressesAndPkhs, getUtxosForAddresses } from "@/utils/utils"
+import { getOrgDatumsAndAmount, getOrgStats, getUserAddressesAndPkhs, getUtxosForAddresses } from "@/utils/utils"
 import { useRouter } from "next/router"
 import { BeaconBeaconToken, VestingVesting } from "@/validators/plutus"
 import { Data, toHex, UTxO } from "lucid-cardano"
+import BeneficiariesList from "../org/beneficiaries-list"
 
 export const metadata: Metadata = {
     title: "Dashboard",
@@ -35,6 +36,9 @@ export default function OrgDashboard() {
         if (orgPolicy && lucidLoaded) {
             const orgDatums = await getOrgDatumsAndAmount(lucid!, orgPolicy as string)
             console.log({orgDatums})
+            const orgStats = await getOrgStats(lucid!, orgPolicy as string)
+            console.log({orgStats})
+            return { orgStats }
         }
         return null
     })
@@ -182,13 +186,14 @@ export default function OrgDashboard() {
                         </Card>
                         <Card className="col-span-3">
                             <CardHeader>
-                                <CardTitle>Claimable Amounts</CardTitle>
+                                <CardTitle>Beneficiaries</CardTitle>
                                 <CardDescription>
-                                    You can claim {Object.keys(data?.claimable.assets || {}).length} assets.
+                                    {/* You can claim {Object.keys(data?.claimable.assets || {}).length} assets. */}
                                 </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <VestingList claimable={data?.claimable || { assets: {}, utxos: [] }} />
+                                <BeneficiariesList beneficiaries={data?.orgStats.beneficiaries || {}} />
+                                {/* <VestingList claimable={data?.claimable || { assets: {}, utxos: [] }} /> */}
                             </CardContent>
                         </Card>
                     </div>
