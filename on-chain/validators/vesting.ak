@@ -12,16 +12,12 @@ type Action {
 
 validator {
   fn vesting(datum: Datum, rdmr: Action, ctx: ScriptContext) -> Bool {
-    let ScriptContext { transaction, purpose } =
-      ctx
-    expect tx.Spend(output_reference) =
-      purpose
+    let ScriptContext { transaction, purpose } = ctx
+    expect tx.Spend(output_reference) = purpose
 
-    let Transaction { outputs, .. } =
-      transaction
+    let Transaction { outputs, .. } = transaction
 
-    let amount_to_beneficiary =
-      get_requested_amount(ctx, datum)
+    let amount_to_beneficiary = get_requested_amount(ctx, datum)
 
     let withdrawable_amount =
       calculate_withdrawable_amount(ctx, datum, output_reference)
@@ -32,9 +28,9 @@ validator {
         fn(output) {
           let assets =
             output.value
-              |> value.tokens(datum.beacon_token)
+              |> value.tokens(converted_datum.beacon_token)
               |> dict.to_list()
-          assets == []
+          assets == [] || output.address == get_contract_address(ctx)
         },
       )
     let org_tokens_present: Bool =
@@ -52,7 +48,16 @@ validator {
       Claim ->
         amount_to_beneficiary <= withdrawable_amount && no_tokens_leave_tx
       Cancel ->
-        org_tokens_present
+        list.all(
+          outputs,
+          fn(output) {
+            let assets =
+              output.value
+                |> value.tokens(datum.org_token)
+                |> dict.to_list()
+            list.length(assets) >= datum.tokens_required
+          },
+        )
     }
   }
 }
