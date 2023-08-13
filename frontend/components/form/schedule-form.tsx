@@ -123,7 +123,7 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
                                                 <PopoverContent className="w-auto p-0">
                                                     <Calendar
                                                         mode="single"
-                                                        selected={new Date()}
+                                                        selected={field.value}
                                                         onSelect={(e) => form.setValue(field.name, e)}
                                                         initialFocus
                                                     />
@@ -185,7 +185,7 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
                                         <FormItem>
                                             <FormLabel>Periods</FormLabel>
                                             <FormControl>
-                                                <Input value={form.getValues(`items.${scheduleIndex}.schedule.${index}.periods`)}  onChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.periods`, Number(e.target.value))} type="number" placeholder="Enter number of periods" />
+                                                <Input value={form.getValues(`items.${scheduleIndex}.schedule.${index}.periods`)} onChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.periods`, Number(e.target.value))} type="number" placeholder="Enter number of periods" />
                                             </FormControl>
                                             <FormDescription>
                                                 How many periods will this amount be released?

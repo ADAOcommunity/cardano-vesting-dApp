@@ -33,11 +33,20 @@ export default function OrgDashboard() {
     const [lucidLoaded, setLucidLoaded] = useState(false)
     const { data, error, isLoading } = useQuery(['orgdashboard', orgPolicy, lucidLoaded], async () => {
         if (orgPolicy && lucidLoaded) {
-            const orgDatums = await getOrgDatumsAndAmount(lucid!, orgPolicy as string)
-            console.log({orgDatums})
-            const orgStats = await getOrgStats(lucid!, orgPolicy as string)
-            console.log({orgStats})
-            return { orgDatums, orgStats }
+            const [ orgDatums, orgStats ] = await Promise.allSettled([
+                getOrgDatumsAndAmount(lucid!, orgPolicy as string),
+                getOrgStats(lucid!, orgPolicy as string)
+            ])
+
+            if(orgDatums.status === 'rejected') {
+                console.log('orgDatums rejected. reason:', orgDatums.reason)
+                return null
+            }
+            if(orgStats.status === 'rejected') {
+                console.log('orgStats rejected. reason:', orgStats.reason)
+                return null
+            }
+            return { orgDatums: orgDatums.value, orgStats: orgStats.value }
         }
         return null
     })
