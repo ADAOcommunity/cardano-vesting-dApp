@@ -58,7 +58,7 @@ pub fn value_sent_to_scripthash(
 pub fn value_sent_to_scripthash_with_datum(
   tx: Transaction,
   scripthash: ScriptHash,
-  payment_datum: tx.Datum,
+  payment_datum: Datum,
 ) -> Value {
   let outputs =
     list.filter(
@@ -135,7 +135,7 @@ pub fn token_amount_from_value(
 pub fn value_sent_to_with_datum(
   tx: Transaction,
   address: Address,
-  payment_datum: tx.Datum,
+  payment_datum: Datum,
 ) -> Value {
   when
     list.filter(
@@ -247,9 +247,9 @@ pub fn get_locked_amount(
 }
 
 /// gets the amount of tokens being unlocked based on how much is being sent to the beneficiary address and amount locked backed to the contract with the same dautm
-pub fn get_requested_amount(ctx: ScriptContext, datum: tx.Datum) -> Int {
+pub fn get_requested_amount(ctx: ScriptContext, datum: Datum) -> Int {
   let Datum { beneficiary, token_policy_id, token_name, .. } =
-    convert_datum(datum)
+    datum
   let transaction =
     ctx.transaction
   let value_to_beneficiary =
