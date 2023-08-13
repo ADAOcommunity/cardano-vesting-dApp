@@ -3,13 +3,13 @@ import {
     AvatarFallback,
     AvatarImage,
 } from "@/components/ui/avatar"
-import { tokenNameFromHex } from "@/utils/utils"
-import { Constr, Data, UTxO } from "lucid-cardano"
+import { calculateWithdrawablePeriods, tokenNameFromHex } from "@/utils/utils"
+import { Constr, Data, UTxO, toHex } from "lucid-cardano"
 import { Button } from "../ui/button"
 import { useContext } from "react"
 import { UserContext } from "@/pages/_app"
-import { validator } from "@/validators/validator"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card"
+import { VestingVesting } from "@/validators/plutus"
 
 type Props = {
     beneficiaries: {
@@ -20,27 +20,37 @@ type Props = {
                 redeemable: bigint,
                 withdrawn: bigint,
                 remaining: bigint,
-                utxos: UTxO[]
+                utxos: {datum: VestingVesting["datum"], utxo: UTxO}[]
             }
         }
     }
 }
 export default function BeneficiariesList({ beneficiaries }: Props) {
     const { lucid, user } = useContext(UserContext)
-
-    const claim = async (utxos: UTxO[]) => {
+    const validator = new VestingVesting()
+    const claim = async (utxos: { datum: VestingVesting["datum"], utxo: UTxO }[]) => {
         if (lucid) {
+            const contractAddress = lucid!.utils.validatorToAddress(validator)
             console.log({ utxos, validator, hash: lucid.utils.validatorToScriptHash(validator), addr: lucid.utils.validatorToAddress(validator) })
             const redeemer = Data.to(new Constr(0, []))
             console.log({ redeemer })
-            const tx = await lucid.newTx()
-                .collectFrom(utxos, redeemer)
+            let tx = lucid.newTx()
+            utxos.forEach((utxo) => {
+                const assetName = utxo.datum.tokenPolicyId + utxo.datum.tokenName
+                const beaconName = utxo.datum.beaconToken+utxo.datum.orgToken
+                const tokensInUtxo = BigInt(utxo.utxo.assets[assetName])
+                const withdrawablePeriods = calculateWithdrawablePeriods(utxo.datum.periodLength, utxo.datum.date)
+                const withdrawableAmount = BigInt(withdrawablePeriods) * utxo.datum.amountPerPeriod
+                const change = tokensInUtxo - withdrawableAmount
+                tx = tx.payToContract(contractAddress, { inline: Data.to(utxo.datum, VestingVesting.datum) }, { [assetName]: change, [beaconName]: BigInt(1)  })
+            })
+            const txComplete = await tx.collectFrom(utxos.map(utxoData => utxoData.utxo), redeemer)
                 .validFrom(Date.now())
                 .validTo(Date.now() + 1000 * 60)
                 .addSigner(user.address)
                 .attachSpendingValidator(validator)
                 .complete()
-            const signedTx = await tx.sign().complete()
+            const signedTx = await txComplete.sign().complete()
             const txHash = await signedTx.submit()
             console.log(txHash)
         }

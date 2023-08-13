@@ -216,12 +216,10 @@ export const getOrgStats = async (lucid: Lucid, orgPolicy: string) => {
         const withdrawablePeriods = calculateWithdrawablePeriods(datum.periodLength, datum.date) 
         const withdrawableToDate = withdrawablePeriods > 0 ? BigInt(withdrawablePeriods) * datum.amountPerPeriod : BigInt(0);
         const redeemable = withdrawableToDate - withdrawn; // amount withdrawable to date discounting what has already been withdrawn
-        let utxos: UTxO[] = [utxo]
+        let utxos: {datum: typeof datum, utxo: UTxO}[] = [{utxo: utxo, datum: datum}]
         // Populate beneficiaries
         if (!stats.beneficiaries[datum.beneficiary]) {
             stats.beneficiaries[datum.beneficiary] = {};
-        }else{
-            utxos = stats.beneficiaries[datum.beneficiary][assetName]?.utxos ? [...stats.beneficiaries[datum.beneficiary][assetName].utxos, utxo] : [utxo]
         }
         stats.beneficiaries[datum.beneficiary][assetName] = {
             totalVested,
@@ -249,7 +247,7 @@ export const getOrgStats = async (lucid: Lucid, orgPolicy: string) => {
     return stats
 }
 
-const calculateWithdrawablePeriods = (periodLength: bigint, startDate:bigint) =>{
+export const calculateWithdrawablePeriods = (periodLength: bigint, startDate:bigint) =>{
     const periodMs = Number(periodLength)*24*60*60*1000
     console.log({periodMs})
     const withdrawablePeriods = Date.now() > Number(startDate)+periodMs ?  Math.floor((Date.now() - Number(startDate)) / periodMs) : 0;
@@ -264,7 +262,7 @@ type Stats = {
                 redeemable: bigint,
                 withdrawn: bigint,
                 remaining: bigint,
-                utxos: UTxO[]
+                utxos: {datum: VestingVesting["datum"], utxo: UTxO}[]
             }
         }
     },
