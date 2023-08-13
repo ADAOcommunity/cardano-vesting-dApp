@@ -193,3 +193,8 @@ export const getOrgDatumsAndAmount = async (lucid: Lucid, orgPolicy: string) => 
     })
     return datums
 }
+
+export const evenDigits = (n: number) => {
+    let str = n.toString();
+    return str.length % 2 === 0 ? str : '0' + str;
+}
