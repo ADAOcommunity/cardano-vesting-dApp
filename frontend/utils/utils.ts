@@ -194,6 +194,10 @@ export const getOrgDatumsAndAmount = async (lucid: Lucid, orgPolicy: string) => 
     return datums
 }
 
+export const evenDigits = (n: number) => {
+    let str = n.toString();
+    return str.length % 2 === 0 ? str : '0' + str;
+}
 export const getOrgStats = async (lucid: Lucid, orgPolicy: string) => {
     const vestingValidator = new VestingVesting()
     const myAddress = "addr_test1qrsaj9wppjzqq9aa8yyg4qjs0vn32zjr36ysw7zzy9y3xztl9fadz30naflhmq653up3tkz275gh5npdejwjj23l0rdquxfsdj"
