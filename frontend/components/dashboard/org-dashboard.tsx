@@ -19,11 +19,65 @@ import { getOrgDatumsAndAmount, getOrgStats, getUserAddressesAndPkhs, getUtxosFo
 import { useRouter } from "next/router"
 import { BeaconBeaconToken, VestingVesting } from "@/validators/plutus"
 import { Data, toHex, UTxO } from "lucid-cardano"
+import TokenUnlockChart, { TokenUnlock } from "../charts/timeline-chart"
+import StackedBarChart, { OrganizationVesting } from "../charts/stacked-bar-chart"
 
 export const metadata: Metadata = {
     title: "Dashboard",
     description: "Example dashboard app using the components.",
 }
+
+const unlockData: TokenUnlock[] = [
+    { date: new Date('2023-01-01'), amount: 100, tokenName: "Token A" },
+    { date: new Date('2023-02-01'), amount: 50, tokenName: "Token B" },
+    { date: new Date('2023-03-01'), amount: 50, tokenName: "Token B" },
+    // ... add more data points
+];
+
+const stackedBarChartData: OrganizationVesting = {
+    orgName: "Org A",
+    beneficiaries: [
+      {
+        beneficiaryName: "Beneficiary 1",
+        vestedAmounts: [
+          { tokenName: "Token A", amount: 100 },
+          { tokenName: "Token B", amount: 100 },
+        ],
+      },
+      {
+        beneficiaryName: "Beneficiary 2",
+        vestedAmounts: [
+          { tokenName: "Token A", amount: 1000 },
+        ],
+      },
+      {
+        beneficiaryName: "Beneficiary 3",
+        vestedAmounts: [
+          { tokenName: "Token A", amount: 100 },
+        ],
+      },
+      {
+        beneficiaryName: "Beneficiary 4",
+        vestedAmounts: [
+          { tokenName: "Token A", amount: 420 },
+        ],
+      },
+      {
+        beneficiaryName: "Beneficiary 5",
+        vestedAmounts: [
+          { tokenName: "Token A", amount: 60 },
+        ],
+      },
+      {
+        beneficiaryName: "Beneficiary 6",
+        vestedAmounts: [
+          { tokenName: "Token A", amount: 75 },
+          { tokenName: "Token B", amount: 20 },
+        ],
+      },
+      // ... other beneficiaries
+    ],
+  };
 
 export default function OrgDashboard() {
     const { user, lucid } = useContext(UserContext)
@@ -59,32 +113,17 @@ export default function OrgDashboard() {
 
     return (
         <>
-            <div className="md:hidden">
-                <Image
-                    src="/examples/dashboard-light.png"
-                    width={1280}
-                    height={866}
-                    alt="Dashboard"
-                    className="block dark:hidden"
-                />
-                <Image
-                    src="/examples/dashboard-dark.png"
-                    width={1280}
-                    height={866}
-                    alt="Dashboard"
-                    className="hidden dark:block"
-                />
-            </div>
+        
             <div className="hidden flex-col md:flex">
                 <div className="flex-1 space-y-4 p-8 pt-6">
                     <div className="flex items-center justify-between space-y-2">
                         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
                     </div>
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                    {/* <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">
-                                    Total Revenue
+                                    Unlock Timeline
                                 </CardTitle>
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -100,10 +139,7 @@ export default function OrgDashboard() {
                                 </svg>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-2xl font-bold">$45,231.89</div>
-                                <p className="text-xs text-muted-foreground">
-                                    +20.1% from last month
-                                </p>
+                                <TokenUnlockChart data={unlockData}/>
                             </CardContent>
                         </Card>
                         <Card>
@@ -182,25 +218,22 @@ export default function OrgDashboard() {
                                 </p>
                             </CardContent>
                         </Card>
-                    </div>
+                    </div> */}
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                         <Card className="col-span-4">
                             <CardHeader>
-                                <CardTitle>Overview</CardTitle>
+                                <CardTitle>Release Timeline</CardTitle>
                             </CardHeader>
                             <CardContent className="pl-2">
-                                <Overview />
+                                <TokenUnlockChart data={unlockData}/>
                             </CardContent>
                         </Card>
-                        <Card className="col-span-3">
+                        <Card className="col-span-4">
                             <CardHeader>
-                                <CardTitle>Claimable Amounts</CardTitle>
-                                <CardDescription>
-                                    {/* You can claim {Object.keys(data?.claimable.assets || {}).length} assets. */}
-                                </CardDescription>
+                                <CardTitle>Release by Beneficiary</CardTitle>
                             </CardHeader>
-                            <CardContent>
-                                {/* <VestingList claimable={data?.claimable || { assets: {}, utxos: [] }} /> */}
+                            <CardContent className="pl-2">
+                                <StackedBarChart data={stackedBarChartData}/>
                             </CardContent>
                         </Card>
                     </div>
