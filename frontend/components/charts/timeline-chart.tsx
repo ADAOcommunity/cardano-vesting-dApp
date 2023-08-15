@@ -13,8 +13,33 @@ interface TokenUnlockChartProps {
   data: TokenUnlock[];
 }
 
+interface CumulativeDataEntry {
+  date: Date;
+  cumulativeAmount: number;
+  amounts: number[];
+  tokens: string[];
+}
+
 const TokenUnlockChart: React.FC<TokenUnlockChartProps> = ({ data }) => {
   const svgRef = useRef<SVGSVGElement | null>(null);
+
+  // Compute cumulative amounts for each date
+  const cumulativeData = data.reduce((acc, curr) => {
+    const lastEntry = acc.find(d => d.date.getTime() === curr.date.getTime());
+    if (lastEntry) {
+      lastEntry.cumulativeAmount += curr.amount;
+      lastEntry.amounts.push(curr.amount);
+      lastEntry.tokens.push(curr.tokenName);
+    } else {
+      acc.push({
+        date: curr.date,
+        cumulativeAmount: curr.amount,
+        amounts: [curr.amount],
+        tokens: [curr.tokenName],
+      });
+    }
+    return acc;
+  }, [] as CumulativeDataEntry[]);
 
   useEffect(() => {
     if (svgRef.current) {
@@ -32,7 +57,7 @@ const TokenUnlockChart: React.FC<TokenUnlockChartProps> = ({ data }) => {
         .range([margin.left, width - margin.right]);
 
       const yScale = d3.scaleLinear()
-        .domain([0, d3.max(data, d => d.amount) as number])
+        .domain([0, d3.max(cumulativeData, d => d.cumulativeAmount) as number])
         .nice()
         .range([height - margin.bottom, margin.top]);
 
@@ -52,15 +77,23 @@ const TokenUnlockChart: React.FC<TokenUnlockChartProps> = ({ data }) => {
         .attr("transform", `translate(${margin.left},0)`)
         .call(yAxis);
 
-      // Drawing bars for token unlock amounts
-      svg.selectAll("rect")
-        .data(data)
-        .join("rect")
-        .attr("x", d => xScale(d.date))
-        .attr("y", d => yScale(d.amount))
-        .attr("width", 10) // width of the bar, you can adjust as needed
-        .attr("height", d => yScale(0) - yScale(d.amount))
-        .attr("fill", d => colorScale(d.tokenName));
+      cumulativeData.forEach(dataEntry => {
+        let yOffset = 0;
+
+        dataEntry.amounts.forEach((amount, idx) => {
+          const yPosition = yScale(dataEntry.cumulativeAmount - yOffset);
+          const barHeight = yScale(0) - yScale(amount);
+
+          svg.append("rect")
+            .attr("x", xScale(dataEntry.date))
+            .attr("y", yPosition)
+            .attr("width", 10) // width of the bar, adjust as needed
+            .attr("height", barHeight)
+            .attr("fill", colorScale(dataEntry.tokens[idx]));
+
+          yOffset += amount;
+        });
+      });
 
 
       // Append a group for the legend

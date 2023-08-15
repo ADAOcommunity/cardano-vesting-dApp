@@ -21,6 +21,7 @@ import { BeaconBeaconToken, VestingVesting } from "@/validators/plutus"
 import { Data, toHex, UTxO } from "lucid-cardano"
 import TokenUnlockChart, { TokenUnlock } from "../charts/timeline-chart"
 import StackedBarChart, { OrganizationVesting } from "../charts/stacked-bar-chart"
+import TokenPieChart from "../charts/token-pie-chart"
 
 export const metadata: Metadata = {
     title: "Dashboard",
@@ -28,56 +29,101 @@ export const metadata: Metadata = {
 }
 
 const unlockData: TokenUnlock[] = [
-    { date: new Date('2023-01-01'), amount: 100, tokenName: "Token A" },
-    { date: new Date('2023-02-01'), amount: 50, tokenName: "Token B" },
-    { date: new Date('2023-03-01'), amount: 50, tokenName: "Token B" },
+    { date: new Date('2023-01-02'), amount: 50, tokenName: "Beneficiary A" },
+    { date: new Date('2023-01-03'), amount: 50, tokenName: "Beneficiary A" },
+    { date: new Date('2023-01-02'), amount: 75, tokenName: "Beneficiary B" },
+    { date: new Date('2023-01-02'), amount: 100, tokenName: "Beneficiary C" },
+
+    { date: new Date('2023-02-02'), amount: 50, tokenName: "Beneficiary A" },
+    { date: new Date('2023-02-02'), amount: 75, tokenName: "Beneficiary B" },
+    { date: new Date('2023-02-02'), amount: 100, tokenName: "Beneficiary C" },
+
+    { date: new Date('2023-03-02'), amount: 50, tokenName: "Beneficiary A" },
+    { date: new Date('2023-03-02'), amount: 75, tokenName: "Beneficiary B" },
+    { date: new Date('2023-03-02'), amount: 100, tokenName: "Beneficiary C" },
+
+
+    { date: new Date('2023-04-02'), amount: 50, tokenName: "Beneficiary A" },
+    { date: new Date('2023-04-02'), amount: 75, tokenName: "Beneficiary B" },
+    { date: new Date('2023-04-02'), amount: 100, tokenName: "Beneficiary C" },
     // ... add more data points
 ];
 
 const stackedBarChartData: OrganizationVesting = {
     orgName: "Org A",
     beneficiaries: [
-      {
-        beneficiaryName: "Beneficiary 1",
-        vestedAmounts: [
-          { tokenName: "Token A", amount: 100 },
-          { tokenName: "Token B", amount: 100 },
-        ],
-      },
-      {
-        beneficiaryName: "Beneficiary 2",
-        vestedAmounts: [
-          { tokenName: "Token A", amount: 1000 },
-        ],
-      },
-      {
-        beneficiaryName: "Beneficiary 3",
-        vestedAmounts: [
-          { tokenName: "Token A", amount: 100 },
-        ],
-      },
-      {
-        beneficiaryName: "Beneficiary 4",
-        vestedAmounts: [
-          { tokenName: "Token A", amount: 420 },
-        ],
-      },
-      {
-        beneficiaryName: "Beneficiary 5",
-        vestedAmounts: [
-          { tokenName: "Token A", amount: 60 },
-        ],
-      },
-      {
-        beneficiaryName: "Beneficiary 6",
-        vestedAmounts: [
-          { tokenName: "Token A", amount: 75 },
-          { tokenName: "Token B", amount: 20 },
-        ],
-      },
-      // ... other beneficiaries
+        {
+            beneficiaryName: "Beneficiary 1",
+            vestedAmounts: [
+                { tokenName: "Token A", amount: 100 },
+                { tokenName: "Token B", amount: 100 },
+            ],
+        },
+        {
+            beneficiaryName: "Beneficiary 2",
+            vestedAmounts: [
+                { tokenName: "Token A", amount: 1000 },
+            ],
+        },
+        {
+            beneficiaryName: "Beneficiary 3",
+            vestedAmounts: [
+                { tokenName: "Token A", amount: 100 },
+            ],
+        },
+        {
+            beneficiaryName: "Beneficiary 4",
+            vestedAmounts: [
+                { tokenName: "Token A", amount: 420 },
+            ],
+        },
+        {
+            beneficiaryName: "Beneficiary 5",
+            vestedAmounts: [
+                { tokenName: "Token A", amount: 60 },
+            ],
+        },
+        {
+            beneficiaryName: "Beneficiary 6",
+            vestedAmounts: [
+                { tokenName: "Token A", amount: 75 },
+                { tokenName: "Token B", amount: 20 },
+            ],
+        },
+
+        {
+            beneficiaryName: "Beneficiary 6",
+            vestedAmounts: [
+                { tokenName: "Token A", amount: 75 },
+                { tokenName: "Token B", amount: 20 },
+            ],
+        },
+        // ... other beneficiaries
     ],
-  };
+};
+
+const beneficiariesData = [
+    {
+        address: '0x1234567890abcdef1234567890abcdef12345678',
+        amount: 1200,
+    },
+    {
+        address: '0xabcdef1234567890abcdef1234567890abcdef12',
+        amount: 800,
+    },
+    {
+        address: '0x7890abcdef1234567890abcdef1234567890abcd',
+        amount: 500,
+    },
+    {
+        address: '0x567890abcdef1234567890abcdef1234567890ab',
+        amount: 2500,
+    },
+    {
+        address: '0x234567890abcdef1234567890abcdef1234567890',
+        amount: 1000,
+    },
+];
 
 export default function OrgDashboard() {
     const { user, lucid } = useContext(UserContext)
@@ -87,16 +133,16 @@ export default function OrgDashboard() {
     const [lucidLoaded, setLucidLoaded] = useState(false)
     const { data, error, isLoading } = useQuery(['orgdashboard', orgPolicy, lucidLoaded], async () => {
         if (orgPolicy && lucidLoaded) {
-            const [ orgDatums, orgStats ] = await Promise.allSettled([
+            const [orgDatums, orgStats] = await Promise.allSettled([
                 getOrgDatumsAndAmount(lucid!, orgPolicy as string),
                 getOrgStats(lucid!, orgPolicy as string)
             ])
 
-            if(orgDatums.status === 'rejected') {
+            if (orgDatums.status === 'rejected') {
                 console.log('orgDatums rejected. reason:', orgDatums.reason)
                 return null
             }
-            if(orgStats.status === 'rejected') {
+            if (orgStats.status === 'rejected') {
                 console.log('orgStats rejected. reason:', orgStats.reason)
                 return null
             }
@@ -113,7 +159,7 @@ export default function OrgDashboard() {
 
     return (
         <>
-        
+
             <div className="hidden flex-col md:flex">
                 <div className="flex-1 space-y-4 p-8 pt-6">
                     <div className="flex items-center justify-between space-y-2">
@@ -222,10 +268,18 @@ export default function OrgDashboard() {
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                         <Card className="col-span-4">
                             <CardHeader>
+                                <CardTitle>Token overview</CardTitle>
+                            </CardHeader>
+                            <CardContent className="pl-2">
+                                <TokenPieChart data={beneficiariesData} />
+                            </CardContent>
+                        </Card>
+                        <Card className="col-span-4">
+                            <CardHeader>
                                 <CardTitle>Release Timeline</CardTitle>
                             </CardHeader>
                             <CardContent className="pl-2">
-                                <TokenUnlockChart data={unlockData}/>
+                                <TokenUnlockChart data={unlockData} />
                             </CardContent>
                         </Card>
                         <Card className="col-span-4">
@@ -233,7 +287,7 @@ export default function OrgDashboard() {
                                 <CardTitle>Release by Beneficiary</CardTitle>
                             </CardHeader>
                             <CardContent className="pl-2">
-                                <StackedBarChart data={stackedBarChartData}/>
+                                <StackedBarChart data={stackedBarChartData} />
                             </CardContent>
                         </Card>
                     </div>
