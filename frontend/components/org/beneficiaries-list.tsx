@@ -42,7 +42,7 @@ export default function BeneficiariesList({ beneficiaries }: Props) {
                 const withdrawablePeriods = calculateWithdrawablePeriods(utxo.datum.periodLength, utxo.datum.date)
                 const withdrawableAmount = BigInt(withdrawablePeriods) * utxo.datum.amountPerPeriod
                 const change = tokensInUtxo - withdrawableAmount
-                tx = tx.payToContract(contractAddress, { inline: Data.to(utxo.datum, VestingVesting.datum) }, { [assetName]: change, [beaconName]: BigInt(1)  })
+                tx = tx.payToContract(contractAddress, { inline: Data.to(new Constr(0,Object.values(utxo.datum))) /* Data.to(utxo.datum, VestingVesting.datum) */ }, { [assetName]: change, [beaconName]: BigInt(1)  })
             })
             const txComplete = await tx.collectFrom(utxos.map(utxoData => utxoData.utxo), redeemer)
                 .validFrom(Date.now())
