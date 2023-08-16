@@ -28,7 +28,7 @@ import { BeneficiarySchedule } from "./schedule-form"
 import { Card, CardContent, CardTitle } from "../ui/card"
 import { useContext, useEffect } from "react"
 import { UserContext } from "@/pages/_app"
-import { getAssetsFromStakeAddress } from "@/utils/utils"
+import { evenDigits, getAssetsFromStakeAddress } from "@/utils/utils"
 import { Constr, Data, SpendingValidator, fromHex, toHex } from "lucid-cardano"
 import { BeaconBeaconToken, VestingVesting } from "@/validators/plutus"
 import { useRouter } from "next/router"
@@ -208,7 +208,7 @@ export function VestingForm() {
         for (let receiver of formatted) {
             // const {amount, token, ...rest} = receiver // remove the "amount" property from the receiver object
             const d: VestingVesting["datum"] = {
-                datumId: utxo.txHash+toHex(Buffer.from(utxo.outputIndex.toString(), "utf8")),
+                datumId: utxo.txHash+evenDigits(utxo.outputIndex),
                 beneficiary: receiver.beneficiary,
                 date: BigInt(receiver.date),
                 tokensRequired: BigInt(receiver.tokens_required),

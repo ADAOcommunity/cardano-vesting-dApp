@@ -19,6 +19,7 @@ import { getOrgDatumsAndAmount, getOrgStats, getUserAddressesAndPkhs, getUtxosFo
 import { useRouter } from "next/router"
 import { BeaconBeaconToken, VestingVesting } from "@/validators/plutus"
 import { Data, toHex, UTxO } from "lucid-cardano"
+import BeneficiariesList from "../org/beneficiaries-list"
 import TokenUnlockChart, { TokenUnlock } from "../charts/timeline-chart"
 import StackedBarChart, { OrganizationVesting } from "../charts/stacked-bar-chart"
 import TokenPieChart from "../charts/token-pie-chart"
@@ -287,6 +288,7 @@ export default function OrgDashboard() {
                                 <CardTitle>Release by Beneficiary</CardTitle>
                             </CardHeader>
                             <CardContent className="pl-2">
+                                <BeneficiariesList beneficiaries={data?.orgStats.beneficiaries || {}} />
                                 <StackedBarChart data={stackedBarChartData} />
                             </CardContent>
                         </Card>
