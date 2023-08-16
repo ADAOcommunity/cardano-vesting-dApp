@@ -49,7 +49,8 @@ const PieChart: React.FC<PieChartProps> = ({ data }) => {
         const legend = svg.selectAll(".legend")
             .data(color.domain())
             .enter().append("g")
-            .attr("class", "legend")
+            // .attr("class", "legend")
+
             .attr("transform", (d, i) => `translate(0,${i * 20})`);
 
         legend.append("rect")
@@ -57,6 +58,7 @@ const PieChart: React.FC<PieChartProps> = ({ data }) => {
             .attr("y", 20)
             .attr("width", 10)
             .attr("height", 10)
+            
             // @ts-ignore
             .style("fill", color);
 
@@ -65,11 +67,13 @@ const PieChart: React.FC<PieChartProps> = ({ data }) => {
             .attr("y", 25)
             .attr("dy", ".35em")
             .style("text-anchor", "start")
+            .classed("text-xs text-accent font-medium", true)
+
             .text(d => d);
 
     }, [data]);
 
-    return <svg ref={svgRef} width="500" height="400"></svg>;  // Adjusted width
+    return <svg  ref={svgRef} width="500" height="400"></svg>;  // Adjusted width
 };
 
 export default PieChart;

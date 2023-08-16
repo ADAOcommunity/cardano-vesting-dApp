@@ -15,7 +15,7 @@ import Overview from "./Overview"
 import { useContext, useEffect, useState } from "react"
 import { UserContext } from "@/pages/_app"
 import { useQuery } from "@tanstack/react-query"
-import { getOrgDatumsAndAmount, getOrgStats, getUserAddressesAndPkhs, getUtxosForAddresses } from "@/utils/utils"
+import { calculateWithdrawablePeriods, getOrgDatumsAndAmount, getOrgStats, getUserAddressesAndPkhs, getUtxosForAddresses, tokenNameFromHex } from "@/utils/utils"
 import { useRouter } from "next/router"
 import { BeaconBeaconToken, VestingVesting } from "@/validators/plutus"
 import { Data, toHex, UTxO } from "lucid-cardano"
@@ -23,6 +23,17 @@ import BeneficiariesList from "../org/beneficiaries-list"
 import TokenUnlockChart, { TokenUnlock } from "../charts/timeline-chart"
 import StackedBarChart, { OrganizationVesting } from "../charts/stacked-bar-chart"
 import TokenPieChart from "../charts/token-pie-chart"
+import { set } from "date-fns"
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+
 
 export const metadata: Metadata = {
     title: "Dashboard",
@@ -103,7 +114,7 @@ const stackedBarChartData: OrganizationVesting = {
     ],
 };
 
-const beneficiariesData = [
+/* const beneficiariesData = [
     {
         address: '0x1234567890abcdef1234567890abcdef12345678',
         amount: 1200,
@@ -124,9 +135,11 @@ const beneficiariesData = [
         address: '0x234567890abcdef1234567890abcdef1234567890',
         amount: 1000,
     },
-];
+]; */
 
 export default function OrgDashboard() {
+    const [tokenList, setTokenList] = useState<string[]>([])
+    const [beneficiariesData, setBeneficiariesData] = useState<{ address: string, amount: number }[]>([])
     const { user, lucid } = useContext(UserContext)
     const router = useRouter()
     const { orgPolicy } = router.query
@@ -147,6 +160,7 @@ export default function OrgDashboard() {
                 console.log('orgStats rejected. reason:', orgStats.reason)
                 return null
             }
+            setTokenList(orgDatums.value.map(datum => datum.datum.tokenPolicyId + datum.datum.tokenName))
             return { orgDatums: orgDatums.value, orgStats: orgStats.value }
         }
         return null
@@ -158,11 +172,37 @@ export default function OrgDashboard() {
         }
     }, [lucid])
 
+    const onTokenSelect = (tokenName: string) => {
+        console.log(tokenName)
+        setBeneficiariesData(data?.orgDatums.filter(datum => datum.datum.tokenPolicyId + datum.datum.tokenName === tokenName).map(datum => {
+            return {
+                address: datum.datum.beneficiary,
+                amount: Number(datum.datum.amountPerPeriod) * calculateWithdrawablePeriods(datum.datum.periodLength, datum.datum.date)
+            }
+        }) || [])
+    }
+
     return (
         <>
 
             <div className="hidden flex-col md:flex">
-                <div className="flex-1 space-y-4 p-8 pt-6">
+                <Select onValueChange={(e)=>onTokenSelect(e)}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Select a token" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectGroup>
+                            <SelectLabel>Tokens</SelectLabel>
+
+                            {
+                                tokenList.map(tokenName => {
+                                    return <SelectItem key={tokenName} value={tokenName}>{tokenNameFromHex(tokenName.slice(56))}</SelectItem>
+                                })
+                            }
+                        </SelectGroup>
+                    </SelectContent>
+                </Select>
+                <div className="flex-1 space-y-4 p-8 pt-6 w-full">
                     <div className="flex items-center justify-between space-y-2">
                         <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
                     </div>
@@ -266,12 +306,12 @@ export default function OrgDashboard() {
                             </CardContent>
                         </Card>
                     </div> */}
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                        <Card className="col-span-4">
+                    <div className="grid gap-4 w-full flex flex-wrap">
+                        <Card className="col-span-4 w-full">
                             <CardHeader>
                                 <CardTitle>Token overview</CardTitle>
                             </CardHeader>
-                            <CardContent className="pl-2">
+                            <CardContent className="pl-2 items-center justify-center flex">
                                 <TokenPieChart data={beneficiariesData} />
                             </CardContent>
                         </Card>
@@ -279,7 +319,7 @@ export default function OrgDashboard() {
                             <CardHeader>
                                 <CardTitle>Release Timeline</CardTitle>
                             </CardHeader>
-                            <CardContent className="pl-2">
+                            <CardContent className="pl-2 justify-center flex">
                                 <TokenUnlockChart data={unlockData} />
                             </CardContent>
                         </Card>
@@ -287,7 +327,7 @@ export default function OrgDashboard() {
                             <CardHeader>
                                 <CardTitle>Release by Beneficiary</CardTitle>
                             </CardHeader>
-                            <CardContent className="pl-2">
+                            <CardContent className="pl-2 justify-center flex flex-col space-y-2">
                                 <BeneficiariesList beneficiaries={data?.orgStats.beneficiaries || {}} />
                                 <StackedBarChart data={stackedBarChartData} />
                             </CardContent>
