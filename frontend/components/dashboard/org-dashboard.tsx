@@ -138,6 +138,7 @@ const stackedBarChartData: OrganizationVesting = {
 ]; */
 
 export default function OrgDashboard() {
+    const [stackedBarChartData, setStackedBarChartData] = useState<OrganizationVesting>({} as OrganizationVesting)
     const [tokenList, setTokenList] = useState<string[]>([])
     const [beneficiariesData, setBeneficiariesData] = useState<{ address: string, amount: number }[]>([])
     const { user, lucid } = useContext(UserContext)
@@ -180,13 +181,29 @@ export default function OrgDashboard() {
                 amount: Number(datum.datum.amountPerPeriod) * calculateWithdrawablePeriods(datum.datum.periodLength, datum.datum.date)
             }
         }) || [])
+
+        setStackedBarChartData({
+            orgName: orgPolicy as string,
+            beneficiaries: Object.keys(data?.orgStats.beneficiaries || []).map(beneficiary => {
+                return {
+                    beneficiaryName: beneficiary,
+                    vestedAmounts: Object.keys(data?.orgStats.beneficiaries[beneficiary] || []).map(tokenName => {
+                        return {
+                            tokenName,
+                            amount: Number(data?.orgStats.beneficiaries[beneficiary][tokenName].totalVested) || 0
+                        }
+                    }).filter(vestedAmount => vestedAmount.tokenName === tokenName)
+                }   
+            })
+        })
+
     }
 
     return (
         <>
 
             <div className="hidden flex-col md:flex">
-                <Select onValueChange={(e)=>onTokenSelect(e)}>
+                <Select onValueChange={(e) => onTokenSelect(e)}>
                     <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Select a token" />
                     </SelectTrigger>
@@ -329,7 +346,7 @@ export default function OrgDashboard() {
                             </CardHeader>
                             <CardContent className="pl-2 justify-center flex flex-col space-y-2">
                                 <BeneficiariesList beneficiaries={data?.orgStats.beneficiaries || {}} />
-                                <StackedBarChart data={stackedBarChartData} />
+                                {stackedBarChartData?.beneficiaries && <StackedBarChart data={stackedBarChartData} />}
                             </CardContent>
                         </Card>
                     </div>
