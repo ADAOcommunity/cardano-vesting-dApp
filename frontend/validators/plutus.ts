@@ -3,7 +3,7 @@ import {
   applyParamsToScript,
   Data,
   Validator,
-} from "https://deno.land/x/lucid@0.10.7/mod.ts";
+} from "lucid-cardano";
 
 export interface BeaconBeaconToken {
   new (scriptHash: string, stakeHash: string): Validator;
