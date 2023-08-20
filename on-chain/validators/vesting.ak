@@ -3,7 +3,10 @@ use aiken/list
 use aiken/transaction.{ScriptContext, Transaction} as tx
 use aiken/transaction/value
 use types.{Datum}
-use utils.{calculate_withdrawable_amount, convert_datum, get_requested_amount}
+use utils.{
+  calculate_withdrawable_amount, convert_datum, get_contract_address,
+  get_requested_amount,
+}
 
 type Action {
   Claim
@@ -16,32 +19,21 @@ validator {
     expect tx.Spend(output_reference) = purpose
 
     let Transaction { outputs, .. } = transaction
-
+    trace @"before amount to beneficiary"
     let amount_to_beneficiary = get_requested_amount(ctx, datum)
-
+    trace @"before withdrawable amount"
     let withdrawable_amount =
       calculate_withdrawable_amount(ctx, datum, output_reference)
-
+    trace @"before no tokens leave"
     let no_tokens_leave_tx: Bool =
       list.all(
         outputs,
         fn(output) {
           let assets =
             output.value
-              |> value.tokens(converted_datum.beacon_token)
+              |> value.tokens(datum.beacon_token)
               |> dict.to_list()
           assets == [] || output.address == get_contract_address(ctx)
-        },
-      )
-    let org_tokens_present: Bool =
-      list.all(
-        outputs,
-        fn(output) {
-          let assets =
-            output.value
-              |> value.tokens(datum.org_token)
-              |> dict.to_list()
-          list.length(assets) >= datum.tokens_required
         },
       )
     when rdmr is {

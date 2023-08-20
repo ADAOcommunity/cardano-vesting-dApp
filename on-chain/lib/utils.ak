@@ -1,3 +1,4 @@
+use aiken/cbor
 use aiken/dict
 use aiken/interval.{Finite, NegativeInfinity, PositiveInfinity}
 use aiken/list
@@ -6,7 +7,7 @@ use aiken/transaction.{
   Transaction,
 } as tx
 use aiken/transaction/credential.{
-  Address, Inline, PaymentCredential, ScriptCredential,
+  Address, Credential, Inline, PaymentCredential, ScriptCredential,
   VerificationKeyCredential, from_verification_key,
 }
 use aiken/transaction/value.{Value, merge, zero}
@@ -22,13 +23,10 @@ pub fn address_from_scripthash(script_hash: ByteArray, stake_hash: ByteArray) {
 
 pub fn convert_datum(datum: tx.Datum) -> Datum {
   when datum is {
-    NoDatum ->
-      error
-    DatumHash(_) ->
-      error
+    NoDatum -> fail
+    DatumHash(_) -> fail
     InlineDatum(d) -> {
-      expect return_datum: Datum =
-        d
+      expect return_datum: Datum = d
       return_datum
     }
   }
@@ -81,10 +79,8 @@ pub fn value_sent_to_scripthash_with_datum(
 // gets the value sent to an address or returns zero if nothing was sent to it
 pub fn value_sent_to_address(tx: Transaction, address: Address) -> Value {
   when list.filter(tx.outputs, fn(output) { output.address == address }) is {
-    [output] ->
-      output.value
-    _ ->
-      zero()
+    [output] -> output.value
+    _ -> zero()
   }
 }
 
@@ -93,23 +89,31 @@ pub fn value_sent_to_pubkeyhash(
   tx: Transaction,
   pubkeyhash: VerificationKeyHash,
 ) -> Value {
-  when
+  let outputs =
     list.filter(
       tx.outputs,
       fn(output) {
-        let cred: PaymentCredential =
-          output.address.payment_credential
+        let cred: PaymentCredential = output.address.payment_credential
         let pay_addr: Address =
           Address { payment_credential: cred, stake_credential: None }
-        pay_addr == from_verification_key(pubkeyhash)
+        let pubkey_addr = from_verification_key(pubkeyhash)
+        trace cbor.diagnostic(pubkey_addr)
+        trace @"pay addr"
+        trace cbor.diagnostic(pay_addr)
+        pay_addr == pubkey_addr
       },
     )
-  is {
-    [output] ->
-      output.value
-    _ ->
-      zero()
-  }
+  trace cbor.diagnostic(outputs)
+  let val =
+    list.foldl(
+      outputs,
+      zero(),
+      fn(output: Output, final_val: Value) -> Value {
+        merge(final_val, output.value)
+      },
+    )
+  trace cbor.diagnostic(val)
+  val
 }
 
 /// gets the amount of a specific token from a value
@@ -118,15 +122,18 @@ pub fn token_amount_from_value(
   asset_policy: ByteArray,
   asset_name: ByteArray,
 ) -> Int {
+  trace @"before expect"
+  trace cbor.diagnostic(asset_policy)
+  trace cbor.diagnostic(val)
+
   expect [(name, amount)] =
     val
       |> value.tokens(asset_policy)
       |> dict.to_list()
+  trace @"before when"
   when name == asset_name is {
-    True ->
-      amount
-    False ->
-      0
+    True -> amount
+    False -> 0
   }
 }
 
@@ -137,19 +144,24 @@ pub fn value_sent_to_with_datum(
   address: Address,
   payment_datum: Datum,
 ) -> Value {
-  when
+  let outputs =
     list.filter(
       tx.outputs,
       fn(output) {
-        output.address == address && output.datum == InlineDatum(payment_datum)
+        output.address.payment_credential == address.payment_credential && output.datum == InlineDatum(
+          payment_datum,
+        )
       },
     )
-  is {
-    [output] ->
-      output.value
-    _ ->
-      zero()
-  }
+  let val =
+    list.foldl(
+      outputs,
+      zero(),
+      fn(output: Output, final_val: Value) -> Value {
+        merge(final_val, output.value)
+      },
+    )
+  val
 }
 
 /// This is a special signing function. 
@@ -164,8 +176,7 @@ pub fn tx_signed_by_address(tx: Transaction, owner: Address) -> Bool {
   when owner.payment_credential is {
     VerificationKeyCredential(keyhash) ->
       list.has(tx.extra_signatories, keyhash)
-    ScriptCredential(scripthash) ->
-      signed_with_input(tx, scripthash)
+    ScriptCredential(scripthash) -> signed_with_input(tx, scripthash)
   }
 }
 
@@ -175,18 +186,14 @@ fn signed_with_input(tx: Transaction, scripthash: ScriptHash) -> Bool {
       tx.inputs,
       fn(input) {
         when input.output.address.payment_credential is {
-          VerificationKeyCredential(_) ->
-            False
-          ScriptCredential(scripthash1) ->
-            scripthash == scripthash1
+          VerificationKeyCredential(_) -> False
+          ScriptCredential(scripthash1) -> scripthash == scripthash1
         }
       },
     )
   is {
-    Some(_) ->
-      True
-    None ->
-      False
+    Some(_) -> True
+    None -> False
   }
 }
 
@@ -198,21 +205,14 @@ pub fn calculate_withdrawable_amount(
 ) -> Int {
   let transaction_start: POSIXTime =
     when ctx.transaction.validity_range.lower_bound.bound_type is {
-      Finite(time) ->
-        time
-      PositiveInfinity ->
-        error
-      NegativeInfinity ->
-        error
+      Finite(time) -> time
+      PositiveInfinity -> fail
+      NegativeInfinity -> fail
     }
-  let time_passed =
-    transaction_start - datum.date
-  let periods_passed =
-    time_passed / datum.period_length
-  let withdrawn_amount =
-    get_withdrawn_amount(datum, ctx)
-  let total_withdrawable =
-    periods_passed * datum.amount_per_period
+  let time_passed = transaction_start - datum.date
+  let periods_passed = time_passed / datum.period_length
+  let withdrawn_amount = get_withdrawn_amount(datum, ctx)
+  let total_withdrawable = periods_passed * datum.amount_per_period
   total_withdrawable - withdrawn_amount
 }
 
@@ -223,8 +223,7 @@ pub fn get_total_vested(datum: Datum) -> Int {
 
 /// gets the amount of tokens that have already been withdrawn from the schedule
 pub fn get_withdrawn_amount(datum: Datum, ctx: ScriptContext) -> Int {
-  let total =
-    get_total_vested(datum)
+  let total = get_total_vested(datum)
   let remaining =
     get_locked_amount(ctx, datum.token_policy_id, datum.token_name)
   total - remaining
@@ -236,8 +235,7 @@ pub fn get_locked_amount(
   policy_id: ByteArray,
   asset_name: ByteArray,
 ) -> Int {
-  expect tx.Spend(out_ref) =
-    ctx.purpose
+  expect tx.Spend(out_ref) = ctx.purpose
   expect Some(input) =
     list.find(
       ctx.transaction.inputs,
@@ -248,28 +246,27 @@ pub fn get_locked_amount(
 
 /// gets the amount of tokens being unlocked based on how much is being sent to the beneficiary address and amount locked backed to the contract with the same dautm
 pub fn get_requested_amount(ctx: ScriptContext, datum: Datum) -> Int {
-  let Datum { beneficiary, token_policy_id, token_name, .. } =
-    datum
-  let transaction =
-    ctx.transaction
-  let value_to_beneficiary =
-    value_sent_to_pubkeyhash(transaction, beneficiary)
+  let Datum { beneficiary, token_policy_id, token_name, .. } = datum
+  let transaction = ctx.transaction
+  let value_to_beneficiary = value_sent_to_pubkeyhash(transaction, beneficiary)
   let amount_to_beneficiary =
     token_amount_from_value(value_to_beneficiary, token_policy_id, token_name)
-  let contract_address =
-    get_contract_address(ctx)
-
+  let contract_address = get_contract_address(ctx)
   let value_to_contract =
     value_sent_to_with_datum(transaction, contract_address, datum)
   let amount_to_contract =
     token_amount_from_value(value_to_contract, token_policy_id, token_name)
-  amount_to_beneficiary - amount_to_contract
+  trace @"amount_to_beneficiary"
+  trace cbor.diagnostic(amount_to_beneficiary)
+  let remaining = amount_to_beneficiary - amount_to_contract
+  trace @"remaining"
+  trace cbor.diagnostic(remaining)
+  remaining
 }
 
 /// gets the contract address from the input being unlocked
 pub fn get_contract_address(ctx: ScriptContext) -> Address {
-  expect tx.Spend(output_reference) =
-    ctx.purpose
+  expect tx.Spend(output_reference) = ctx.purpose
   expect Some(input) =
     list.find(
       ctx.transaction.inputs,
