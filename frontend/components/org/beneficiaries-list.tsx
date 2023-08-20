@@ -53,7 +53,7 @@ export default function BeneficiariesList({ beneficiaries }: Props) {
             }
             tx = tx.collectFrom(utxos.map(utxoData => utxoData.utxo), redeemer)
                 .payToAddress(beneficiaryAddress, { [utxos[0].datum.tokenPolicyId + utxos[0].datum.tokenName]: totalToBeneficiary })
-                .validFrom(Date.now()-10000)
+                .validFrom(Date.now()-60000)
                 .validTo(Date.now() + 1000 * 60)
                 .addSigner(user.address)
                 .attachSpendingValidator(validator)
