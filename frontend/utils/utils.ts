@@ -206,6 +206,7 @@ export const getOrgStats = async (lucid: Lucid, orgPolicy: string) => {
     const beaconPolicy = new BeaconBeaconToken(lucid!.utils.validatorToScriptHash(vestingValidator), stakeCredential!.hash)
     const beaconPolicyId = lucid!.utils.mintingPolicyToId(beaconPolicy)
     const contractAddress = lucid!.utils.validatorToAddress(vestingValidator, stakeCredential)
+    console.log({ contractAddress })
     let orgUtxos = await lucid!.utxosAtWithUnit(contractAddress, beaconPolicyId + orgPolicy)
     console.log({ orgUtxos })
     let stats: Stats = { beneficiaries: {}, totals: {} }

@@ -220,13 +220,13 @@ export function VestingForm() {
                 tokenPolicyId: receiver.token_policy_id,
                 tokenName: receiver.token_name,
             }
-            console.log({ d })
+            /* console.log({ d })
             const datumVals = Object.values(d)
             console.log({datumVals})    
+            const datum = Data.to(new Constr(0,datumVals)) */
 
-            //const datum = Data.to(d, VestingVesting.datum)
+            const datum = Data.to(d, VestingVesting.datum)
 
-            const datum = Data.to(new Constr(0,datumVals))
             
             tx = tx!.payToContract(contractAddress, { inline: datum }, { [receiver.token_policy_id+receiver.token_name]: BigInt(receiver.amount!*receiver.periods), [beaconPolicyId+orgPolicy]: BigInt(1) })
         }

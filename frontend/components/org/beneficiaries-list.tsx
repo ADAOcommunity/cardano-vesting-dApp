@@ -20,7 +20,7 @@ type Props = {
                 redeemable: bigint,
                 withdrawn: bigint,
                 remaining: bigint,
-                utxos: {datum: VestingVesting["datum"], utxo: UTxO}[]
+                utxos: { datum: VestingVesting["datum"], utxo: UTxO }[]
             }
         }
     }
@@ -35,20 +35,23 @@ export default function BeneficiariesList({ beneficiaries }: Props) {
             const redeemer = Data.to(new Constr(0, []))
             console.log({ redeemer })
             let tx = lucid.newTx()
-            utxos.forEach((utxo) => {
+            for (let utxo of utxos) {
                 const assetName = utxo.datum.tokenPolicyId + utxo.datum.tokenName
-                const beaconName = utxo.datum.beaconToken+utxo.datum.orgToken
+                const beaconName = utxo.datum.beaconToken + utxo.datum.orgToken
                 const tokensInUtxo = BigInt(utxo.utxo.assets[assetName])
                 const withdrawablePeriods = calculateWithdrawablePeriods(utxo.datum.periodLength, utxo.datum.date)
                 const withdrawableAmount = BigInt(withdrawablePeriods) * utxo.datum.amountPerPeriod
                 const change = tokensInUtxo - withdrawableAmount
-                tx = tx.payToContract(contractAddress, { inline: Data.to(new Constr(0,Object.values(utxo.datum))) /* Data.to(utxo.datum, VestingVesting.datum) */ }, { [assetName]: change, [beaconName]: BigInt(1)  })
-            })
-            const txComplete = await tx.collectFrom(utxos.map(utxoData => utxoData.utxo), redeemer)
+                console.log({ change })
+                tx = tx.payToContract(contractAddress, { inline: Data.to(utxo.datum, VestingVesting.datum) /* Data.to(utxo.datum, VestingVesting.datum) */ }, { [assetName]: change, [beaconName]: BigInt(1) })
+            }
+            tx = tx.collectFrom(utxos.map(utxoData => utxoData.utxo), redeemer)
                 .validFrom(Date.now())
                 .validTo(Date.now() + 1000 * 60)
                 .addSigner(user.address)
                 .attachSpendingValidator(validator)
+            console.log(await tx.toString())
+            const txComplete = await tx
                 .complete()
             const signedTx = await txComplete.sign().complete()
             const txHash = await signedTx.submit()
