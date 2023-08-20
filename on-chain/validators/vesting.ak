@@ -19,12 +19,9 @@ validator {
     expect tx.Spend(output_reference) = purpose
 
     let Transaction { outputs, .. } = transaction
-    trace @"before amount to beneficiary"
     let amount_to_beneficiary = get_requested_amount(ctx, datum)
-    trace @"before withdrawable amount"
     let withdrawable_amount =
       calculate_withdrawable_amount(ctx, datum, output_reference)
-    trace @"before no tokens leave"
     let no_tokens_leave_tx: Bool =
       list.all(
         outputs,

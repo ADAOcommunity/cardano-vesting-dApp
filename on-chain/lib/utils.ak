@@ -97,13 +97,9 @@ pub fn value_sent_to_pubkeyhash(
         let pay_addr: Address =
           Address { payment_credential: cred, stake_credential: None }
         let pubkey_addr = from_verification_key(pubkeyhash)
-        trace cbor.diagnostic(pubkey_addr)
-        trace @"pay addr"
-        trace cbor.diagnostic(pay_addr)
         pay_addr == pubkey_addr
       },
     )
-  trace cbor.diagnostic(outputs)
   let val =
     list.foldl(
       outputs,
@@ -112,7 +108,6 @@ pub fn value_sent_to_pubkeyhash(
         merge(final_val, output.value)
       },
     )
-  trace cbor.diagnostic(val)
   val
 }
 
@@ -122,15 +117,10 @@ pub fn token_amount_from_value(
   asset_policy: ByteArray,
   asset_name: ByteArray,
 ) -> Int {
-  trace @"before expect"
-  trace cbor.diagnostic(asset_policy)
-  trace cbor.diagnostic(val)
-
   expect [(name, amount)] =
     val
       |> value.tokens(asset_policy)
       |> dict.to_list()
-  trace @"before when"
   when name == asset_name is {
     True -> amount
     False -> 0
@@ -256,11 +246,7 @@ pub fn get_requested_amount(ctx: ScriptContext, datum: Datum) -> Int {
     value_sent_to_with_datum(transaction, contract_address, datum)
   let amount_to_contract =
     token_amount_from_value(value_to_contract, token_policy_id, token_name)
-  trace @"amount_to_beneficiary"
-  trace cbor.diagnostic(amount_to_beneficiary)
   let remaining = amount_to_beneficiary - amount_to_contract
-  trace @"remaining"
-  trace cbor.diagnostic(remaining)
   remaining
 }
 
