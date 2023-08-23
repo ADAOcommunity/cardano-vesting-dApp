@@ -94,7 +94,7 @@ const defaultValues: Partial<VestingFormValues> = {
                     amount: 0,
                     freeDate: new Date(),
                     periods: 1,
-                    periodical: false,
+                    periodical: true,
                     periodLength: 0,
                     token: ""
                 }
@@ -138,7 +138,7 @@ export function VestingForm() {
 
     const addBeneficiary = (e: any) => {
         e.preventDefault()
-        append({ beneficiary: "", schedule: [{ amount: 0, freeDate: new Date(), token: "", periodical: false, periodLength: 0 }] })
+        append({ beneficiary: "", schedule: [{ amount: 0, freeDate: new Date(), token: "", periodical: true, periodLength: 0, periods: 1 }] })
     }
     const removeBeneficiary = (e: any, index: number) => {
         e.preventDefault()

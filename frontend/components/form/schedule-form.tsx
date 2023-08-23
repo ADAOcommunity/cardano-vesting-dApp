@@ -52,7 +52,7 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
     const addBeneficiarySchedule = (e: any) => {
 
         e.preventDefault()
-        append({ amount: 0, token: "", freeDate: new Date() })
+        append({ amount: 0, token: "", freeDate: new Date(), periods:1, periodLength:0, periodical: true })
 
     }
     const removeBeneficiarySchedule = (e: any, index: number) => {
@@ -137,25 +137,24 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
                                     </FormItem>
                                 )}
                             />
-                            <FormField
+                           {/*  <FormField
                                 control={form.control}
                                 name={`items.${scheduleIndex}.schedule.${index}.periodical`}
                                 render={({ field }) => (
                                     <FormItem>
-                                        {/* <FormLabel>Periodical?</FormLabel> */}
-                                        <FormControl>
+                                         <FormControl>
                                             <div className="flex items-center space-x-2">
                                                 <Switch onCheckedChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.periodical`, e)} id="periodical" />
                                                 <Label htmlFor="airplane-mode">Periodical</Label>
                                             </div>
-                                        </FormControl>
+                                        </FormControl> 
                                         <FormDescription>
                                             Is the schedule periodical or on a specific date?
                                         </FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                 )}
-                            />
+                            /> */}
 
 
 
