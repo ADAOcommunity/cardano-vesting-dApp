@@ -1,10 +1,10 @@
-name = "adao/vesting"
+name = "aiken-lang/vesting"
 version = "0.0.0"
 license = "Apache-2.0"
-description = "Aiken contracts for project 'adao/vesting'"
+description = "Aiken contracts for project 'aiken-lang/vesting'"
 
 [repository]
-user = "adao"
+user = "aiken-lang"
 project = "vesting"
 platform = "github"
 
