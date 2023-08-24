@@ -25,11 +25,12 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/use-toast"
 import { Card, CardContent, CardTitle } from "../ui/card"
-import { useContext, useEffect } from "react"
+import { useContext, useEffect, useState } from "react"
 import { UserContext } from "@/pages/_app"
 import { getAssetsFromStakeAddress } from "@/utils/utils"
 import { Constr, Data, SpendingValidator, fromHex, toHex } from "lucid-cardano"
 import { OrgTokenOrgToken, VestingVesting } from "@/validators/plutus"
+import { Loader2 } from "lucide-react"
 // import { validator } from "@/validators/validator"
 
 
@@ -54,7 +55,7 @@ const defaultValues: Partial<OrgFormValues> = {
 
 export function OrgForm() {
     const { lucid } = useContext(UserContext)
-
+    const [isLoading, setIsLoading] = useState(false)
     const form = useForm<OrgFormValues>({
         resolver: zodResolver(createOrgSchema),
         defaultValues,
@@ -67,18 +68,29 @@ export function OrgForm() {
     })
 
     async function onSubmit(data: OrgFormValues) {
-        console.log("submit")
-        console.log({data})
-        const txHash = await createTx(data)
-        console.log({ txHash })
-        toast({
-            title: "You submitted the following values:",
-            description: (
-                <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-                    <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-                </pre>
-            ),
-        })
+        try{
+            setIsLoading(true)
+            console.log("submit")
+            console.log({data})
+            const txHash = await createTx(data)
+            console.log({ txHash })
+            setIsLoading(false)
+    
+            toast({
+                title: "You submitted the following values:",
+                description: (
+                    <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+                        <code className="text-white">{JSON.stringify(data, null, 2)}</code>
+                    </pre>
+                ),
+            })
+        }catch(e){
+            setIsLoading(false)
+            toast({
+                title: "Error creating organization.",
+                variant: "destructive",
+            })
+        }
     }
 
     const addOrgMember = (e: any) => {
@@ -146,7 +158,7 @@ export function OrgForm() {
                 ))}
                 <div className="flex justify-between w-full">
                     <Button variant="secondary" onClick={addOrgMember} >Add Member</Button>
-                    <Button onClick={() => console.log(form.formState.isValid)} type="submit">Create schedule</Button>
+                    <Button onClick={() => console.log(form.formState.isValid)} type="submit">{isLoading ? <Loader2 className="animate-spin" /> : 'Create organization'}</Button>
                 </div>
             </form>
         </Form>

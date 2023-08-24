@@ -6,6 +6,9 @@ import WalletConnect from '@/components/wallet-connect'
 import { Button } from '@/components/ui/button'
 import HeroBackground from '@/components/hero-background'
 import Link from 'next/link'
+import { GitHubLogoIcon } from "@radix-ui/react-icons";
+import { DiscordLogoIcon } from "@radix-ui/react-icons";
+import { TwitterLogoIcon } from "@radix-ui/react-icons";
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -20,6 +23,9 @@ export default function Home() {
             {/* <Search /> */}
             <WalletConnect />
             {/* <UserNav /> */}
+            <Link href='https://github.com/ADAOcommunity/cardano-vesting-dApp'><Button variant={'ghost'} size='icon'><GitHubLogoIcon /></Button></Link>
+            <Link href='https://discord.gg/BGuhdBXQFU'><Button variant={'ghost'} size='icon'><DiscordLogoIcon /></Button></Link>
+            <Link href='https://discord.gg/BGuhdBXQFU'><Button variant={'ghost'} size='icon'><TwitterLogoIcon /></Button></Link>
           </div>
         </div>
       </div>

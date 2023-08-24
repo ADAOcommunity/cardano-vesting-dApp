@@ -26,12 +26,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/components/ui/use-toast"
 import { BeneficiarySchedule } from "./schedule-form"
 import { Card, CardContent, CardTitle } from "../ui/card"
-import { useContext, useEffect } from "react"
+import { useContext, useEffect, useState } from "react"
 import { UserContext } from "@/pages/_app"
 import { evenDigits, getAssetsFromStakeAddress } from "@/utils/utils"
 import { Constr, Data, SpendingValidator, fromHex, toHex } from "lucid-cardano"
 import { BeaconBeaconToken, VestingVesting } from "@/validators/plutus"
 import { useRouter } from "next/router"
+import { Loader2 } from "lucide-react"
 // import { validator } from "@/validators/validator"
 
 
@@ -107,7 +108,7 @@ const defaultValues: Partial<VestingFormValues> = {
 export function VestingForm() {
     const validator = new VestingVesting()
     const { lucid } = useContext(UserContext)
-    
+    const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
     const { orgPolicy } = router.query
 
@@ -123,6 +124,7 @@ export function VestingForm() {
     })
 
     async function onSubmit(data: VestingFormValues) {
+        setIsLoading(true)
         console.log("submit")
         const txHash = await createTx(data)
         console.log({ txHash })
@@ -134,6 +136,7 @@ export function VestingForm() {
                 </pre>
             ),
         })
+        setIsLoading(false)
         router.push(`/${orgPolicy}/dashboard`)
     }
 
@@ -276,7 +279,7 @@ export function VestingForm() {
                 ))}
                 <div className="flex justify-between w-full">
                     <Button variant="secondary" onClick={addBeneficiary} >Add beneficiary</Button>
-                    <Button onClick={() => console.log(form.formState.isValid)} type="submit">Create schedule</Button>
+                    <Button onClick={() => console.log(form.formState.isValid)} type="submit"> {isLoading ? <Loader2 className="animate-spin" /> : 'Create schedule'}</Button>
                 </div>
             </form>
         </Form>
