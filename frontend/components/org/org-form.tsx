@@ -31,6 +31,7 @@ import { getAssetsFromStakeAddress } from "@/utils/utils"
 import { Constr, Data, SpendingValidator, fromHex, toHex } from "lucid-cardano"
 import { OrgTokenOrgToken, VestingVesting } from "@/validators/plutus"
 import { Loader2 } from "lucide-react"
+import { useRouter } from "next/router"
 // import { validator } from "@/validators/validator"
 
 
@@ -56,6 +57,7 @@ const defaultValues: Partial<OrgFormValues> = {
 export function OrgForm() {
     const { lucid } = useContext(UserContext)
     const [isLoading, setIsLoading] = useState(false)
+    const router = useRouter()
     const form = useForm<OrgFormValues>({
         resolver: zodResolver(createOrgSchema),
         defaultValues,
@@ -72,7 +74,7 @@ export function OrgForm() {
             setIsLoading(true)
             console.log("submit")
             console.log({data})
-            const txHash = await createTx(data)
+            const {txHash, policyId} = await createTx(data)
             console.log({ txHash })
             setIsLoading(false)
     
@@ -84,6 +86,7 @@ export function OrgForm() {
                     </pre>
                 ),
             })
+            router.push(`/${policyId}/dashboard`)
         }catch(e){
             setIsLoading(false)
             toast({
@@ -123,7 +126,7 @@ export function OrgForm() {
         const txComplete = await tx?.complete()
         const signedTx = await txComplete?.sign().complete()
         const txHash = await signedTx?.submit()
-        return txHash
+        return {txHash, policyId}
     }
 
     return (

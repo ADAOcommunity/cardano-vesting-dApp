@@ -33,6 +33,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import Link from "next/link"
 
 
 export const metadata: Metadata = {
@@ -193,7 +194,7 @@ export default function OrgDashboard() {
                             amount: Number(data?.orgStats.beneficiaries[beneficiary][tokenName].totalVested) || 0
                         }
                     }).filter(vestedAmount => vestedAmount.tokenName === tokenName)
-                }   
+                }
             })
         })
 
@@ -202,7 +203,9 @@ export default function OrgDashboard() {
     return (
         <>
 
-            <div className="hidden flex-col md:flex">
+            <div className="hidden flex-col md:flex space-y-4">
+                <Link href={`/${orgPolicy}/create`}><Button variant={'default'} size='lg'>New Schedule</Button></Link>
+
                 <Select onValueChange={(e) => onTokenSelect(e)}>
                     <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Select a token" />
@@ -324,31 +327,31 @@ export default function OrgDashboard() {
                         </Card>
                     </div> */}
                     <div className="grid gap-4 w-full flex flex-wrap">
-                        <Card className="col-span-4 w-full">
+                        {beneficiariesData.length > 0 && <Card className="col-span-4 w-full">
                             <CardHeader>
                                 <CardTitle>Token overview</CardTitle>
                             </CardHeader>
                             <CardContent className="pl-2 items-center justify-center flex">
                                 <TokenPieChart data={beneficiariesData} />
                             </CardContent>
-                        </Card>
-                        <Card className="col-span-4">
+                        </Card>}
+                        {unlockData.length > 0 && <Card className="col-span-4">
                             <CardHeader>
                                 <CardTitle>Release Timeline</CardTitle>
                             </CardHeader>
                             <CardContent className="pl-2 justify-center flex">
                                 <TokenUnlockChart data={unlockData} />
                             </CardContent>
-                        </Card>
-                        <Card className="col-span-4">
+                        </Card>}
+                        {stackedBarChartData?.beneficiaries && <Card className="col-span-4">
                             <CardHeader>
                                 <CardTitle>Release by Beneficiary</CardTitle>
                             </CardHeader>
                             <CardContent className="pl-2 justify-center flex flex-col space-y-2">
                                 <BeneficiariesList beneficiaries={data?.orgStats.beneficiaries || {}} />
-                                {stackedBarChartData?.beneficiaries && <StackedBarChart data={stackedBarChartData} />}
+                                <StackedBarChart data={stackedBarChartData} />
                             </CardContent>
-                        </Card>
+                        </Card>}
                     </div>
                 </div>
             </div>
