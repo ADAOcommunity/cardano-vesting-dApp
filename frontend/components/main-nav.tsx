@@ -12,8 +12,8 @@ export function MainNav({
       {...props}
     >
       <Link
-        href="/examples/dashboard"
-        className="text-sm font-medium transition-colors hover:text-primary"
+        href="/"
+        className="font-medium transition-colors hover:text-primary"
       >
         ADAO vesting dApp
       </Link>

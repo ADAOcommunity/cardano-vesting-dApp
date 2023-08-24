@@ -1,118 +1,76 @@
 import Image from 'next/image'
 import { Inter } from 'next/font/google'
+import Layout from '@/components/ui/layout'
+import { MainNav } from '@/components/main-nav'
+import WalletConnect from '@/components/wallet-connect'
+import { Button } from '@/components/ui/button'
+import HeroBackground from '@/components/hero-background'
+import Link from 'next/link'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export default function Home() {
   return (
-    <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
-    >
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">pages/index.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <>
+      <div className="border-b border-muted-foreground relative z-[100]">
+        <div className="flex h-16 items-center px-4 z-10">
+          {/* <TeamSwitcher /> */}
+          <MainNav className="mx-6" />
+          <div className="ml-auto flex items-center space-x-4">
+            {/* <Search /> */}
+            <WalletConnect />
+            {/* <UserNav /> */}
+          </div>
+        </div>
+      </div>
+      <HeroBackground />
+
+      <div className='h-screen flex items-center flex-row w-full justify-evenly relative  '>
+        <div className='w-1/3 flex flex-col text-left space-y-8 px-4 z-10'>
+          <h1 className='text-4xl text-primary font-bold tracking-tight'> Empowering the Cardano Community with ADAO Vesting Solutions</h1>
+          <div className='text-secondary-foreground text-lg' >Designed for the Cardano community. Emphasizing growth, transparency, and security, our platform caters to organizations and individuals alike. Create compliant token vesting schedules or manage digital assets with functionality and ease.</div>
+        </div>
+        <div className='text-left w-1/3 flex flex-col space-y-8 px-4 justify-even z-10'>
+          <div className='flex flex-col space-y-4 text-lg'>
+            <div className='text-secondary-foreground' >
+              🔒 Secure & Transparent: Built on Cardano's robust infrastructure, we provide an impenetrable and transparent environment for your token vesting needs.
+            </div>
+            <div className='text-secondary-foreground' >
+              📈 Flexible & Customizable: From organizational structures to individual agreements, design vesting schedules that align with your unique goals and timelines.
+            </div>
+            <div className='text-secondary-foreground' >
+              💼 Built for the Community: Crafted by Cardano enthusiasts for Cardano enthusiasts, ADAO's vesting application echoes the ethos of collaboration and innovation that drives our community forward.
+            </div>
+          </div>
+          <div className='flex flex-row justify-evenly content-center text-center items-center align-center w-full' >
+            <Link href={'/org/create'}><Button size={'lg'}>Create org</Button></Link>
+            <Link href={'/#howitworks'}><Button size={'lg'} variant={'secondary'} >How it works</Button></Link>
+          </div>
         </div>
       </div>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700/10 after:dark:from-sky-900 after:dark:via-[#0141ff]/40 before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
+      <div id='howitworks' className='h-screen flex items-center flex-row w-full justify-evenly relative  '>
+        <div className='w-2/3 flex flex-col text-left space-y-8 px-4 z-10'>
+          <h1 className='text-4xl text-primary font-bold tracking-tight'>How it works</h1>
+          <div className='text-secondary-foreground text-lg' >
+            <ol className="list-decimal list-inside space-y-4">
+              <li>
+                <strong>Create an Organization:</strong> Indicate the addresses of organization members. Upon creation, one unique token with a specific policy ID is sent to each member, which can be used to cancel vesting schedules based on a specified minimum amount.
+              </li>
+              <li>
+                <strong>Mint Organization Tokens:</strong> After creating the organization, the tokens are minted and distributed among the members.
+              </li>
+              <li>
+                <strong>Create Vesting Schedules:</strong> Organization members can create vesting schedules by specifying the beneficiaries, the amount of tokens to be distributed per period, and the total number of periods.
+              </li>
+              <li>
+                <strong>Claim Benefits:</strong> Beneficiaries can use the dashboard to check their claimable amounts and claim them accordingly.
+              </li>
+            </ol>
+          </div>
+          <Link href={'/org/create'}><Button size={'lg'} >Get started</Button></Link>
+        </div>
       </div>
-
-      <div className="mb-32 grid text-center lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Discover and deploy boilerplate example Next.js&nbsp;projects.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </>
   )
 }

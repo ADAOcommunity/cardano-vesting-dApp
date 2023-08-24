@@ -134,6 +134,7 @@ export function VestingForm() {
                 </pre>
             ),
         })
+        router.push(`/${orgPolicy}/dashboard`)
     }
 
     const addBeneficiary = (e: any) => {
