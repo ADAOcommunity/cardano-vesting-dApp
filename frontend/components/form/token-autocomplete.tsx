@@ -78,7 +78,7 @@ export function TokenAutocomplete({ field, setValue }: any) {
                 {/* <Button variant="outline">Open</Button> */}
                     <FormLabel >Token</FormLabel>
                     <FormControl  className="mt-2">
-                        <Input onClick={() => setIsOpen(true)} ref={inputRef} /* onClick={()=>setIsOpen(!isOpen)} */ onInput={(e) => filterTokens(e.target.value)} placeholder="Enter token name" {...field} />
+                        <Input onClick={() => setIsOpen(true)} ref={inputRef} /* onClick={()=>setIsOpen(!isOpen)} */ onInput={(e: any) => filterTokens(e.target.value)} placeholder="Enter token name" {...field} />
 
                     </FormControl>
                    
