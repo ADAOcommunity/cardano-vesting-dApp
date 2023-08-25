@@ -2,6 +2,7 @@
 
 ADAO's Vesting Application is a specialized platform designed for the Cardano community, enabling organizations and individuals to create and manage token vesting schedules.
 
+
 ## Workflow
 
 1. **Create an Organization**: Define members by their addresses. A unique token with a specific policy ID is sent to each member to allow managing vesting schedules.
