@@ -39,13 +39,13 @@ export default function Home() {
         <div className='text-left w-1/3 flex flex-col space-y-8 px-4 justify-even z-10'>
           <div className='flex flex-col space-y-4 text-lg'>
             <div className='text-secondary-foreground' >
-              🔒 Secure & Transparent: Built on Cardano's robust infrastructure, we provide an impenetrable and transparent environment for your token vesting needs.
+              🔒 Secure & Transparent: Built on Cardano &apos;s robust infrastructure, we provide an impenetrable and transparent environment for your token vesting needs.
             </div>
             <div className='text-secondary-foreground' >
               📈 Flexible & Customizable: From organizational structures to individual agreements, design vesting schedules that align with your unique goals and timelines.
             </div>
             <div className='text-secondary-foreground' >
-              💼 Built for the Community: Crafted by Cardano enthusiasts for Cardano enthusiasts, ADAO's vesting application echoes the ethos of collaboration and innovation that drives our community forward.
+              💼 Built for the Community: Crafted by Cardano enthusiasts for Cardano enthusiasts, ADAO&apos;s vesting application echoes the ethos of collaboration and innovation that drives our community forward.
             </div>
           </div>
           <div className='flex flex-row justify-evenly content-center text-center items-center align-center w-full' >
