@@ -64,7 +64,7 @@ export function OrgForm() {
         mode: "onChange",
     })
 
-    const { fields, append, remove } = useFieldArray({
+    const { fields, append, remove } = useFieldArray<any>({
         name: "items",
         control: form.control,
     })
