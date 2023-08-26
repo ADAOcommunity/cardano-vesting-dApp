@@ -15,7 +15,7 @@ import Overview from "./Overview"
 import { useContext, useEffect, useState } from "react"
 import { UserContext } from "@/pages/_app"
 import { useQuery } from "@tanstack/react-query"
-import { calculateWithdrawablePeriods, getOrgDatumsAndAmount, getOrgStats, getUserAddressesAndPkhs, getUtxosForAddresses, tokenNameFromHex } from "@/utils/utils"
+import { DatumsAndAmounts, calculateWithdrawablePeriods, getOrgDatumsAndAmount, getOrgStats, getUserAddressesAndPkhs, getUtxosForAddresses, tokenNameFromHex } from "@/utils/utils"
 import { useRouter } from "next/router"
 import { BeaconBeaconToken, VestingVesting } from "@/validators/plutus"
 import { Data, toHex, UTxO } from "lucid-cardano"
@@ -115,30 +115,9 @@ const stackedBarChartData: OrganizationVesting = {
     ],
 };
 
-/* const beneficiariesData = [
-    {
-        address: '0x1234567890abcdef1234567890abcdef12345678',
-        amount: 1200,
-    },
-    {
-        address: '0xabcdef1234567890abcdef1234567890abcdef12',
-        amount: 800,
-    },
-    {
-        address: '0x7890abcdef1234567890abcdef1234567890abcd',
-        amount: 500,
-    },
-    {
-        address: '0x567890abcdef1234567890abcdef1234567890ab',
-        amount: 2500,
-    },
-    {
-        address: '0x234567890abcdef1234567890abcdef1234567890',
-        amount: 1000,
-    },
-]; */
 
 export default function OrgDashboard() {
+    const [unlockData, setUnlockData] = useState<TokenUnlock[]>([])
     const [stackedBarChartData, setStackedBarChartData] = useState<OrganizationVesting>({} as OrganizationVesting)
     const [tokenList, setTokenList] = useState<string[]>([])
     const [beneficiariesData, setBeneficiariesData] = useState<{ address: string, amount: number }[]>([])
@@ -163,7 +142,7 @@ export default function OrgDashboard() {
                 return null
             }
             setTokenList(orgDatums.value.map(datum => datum.datum.tokenPolicyId + datum.datum.tokenName))
-            return { orgDatums: orgDatums.value, orgStats: orgStats.value }
+            return { orgDatums: orgDatums.value as DatumsAndAmounts, orgStats: orgStats.value }
         }
         return null
     })
@@ -173,6 +152,25 @@ export default function OrgDashboard() {
             setLucidLoaded(true)
         }
     }, [lucid])
+
+
+    const createUnlockData = (data: DatumsAndAmounts)=>{
+        const unlockData: TokenUnlock[] = []
+        for (let datum of data) {
+            const d = datum.datum
+            const start = new Date(Number(d.date))
+            const end = new Date(Number(d.date) + Number(d.periodLength) * Number(d.numPeriods))
+            for (let i = 0; i < Number(d.numPeriods); i++) {
+                unlockData.push({
+                    date: new Date(start.getTime() + i * Number(d.periodLength)),
+                    amount: Number(d.amountPerPeriod),
+                    tokenName: tokenNameFromHex(d.tokenName)
+                })
+            }
+        }
+        return unlockData
+
+    }
 
     const onTokenSelect = (tokenName: string) => {
         console.log(tokenName)
@@ -197,7 +195,7 @@ export default function OrgDashboard() {
                 }
             })
         })
-
+        setUnlockData(createUnlockData(data!.orgDatums))
     }
 
     return (

@@ -1,6 +1,23 @@
 import { BeaconBeaconToken, VestingVesting } from "@/validators/plutus";
 import { C, Constr, Data, Lucid, UTxO, WalletApi, fromHex } from "lucid-cardano";
 
+export type DatumsAndAmounts = {
+    datum: {
+        datumId: string;
+        beneficiary: string;
+        date: bigint;
+        tokensRequired: bigint;
+        orgToken: string;
+        beaconToken: string;
+        numPeriods: bigint;
+        periodLength: bigint;
+        amountPerPeriod: bigint;
+        tokenPolicyId: string;
+        tokenName: string;
+    };
+    tokenAmount: bigint;
+}[]
+
 export const tokenNameFromHex = (assetName: string) => {
     return Buffer.from(assetName, 'hex').toString('utf-8')
 }
@@ -174,7 +191,7 @@ export const getUtxosForAddresses = async (lucid: Lucid, contractAddress: string
     return { utxos: formattedUtxos, claimable, totals }
 }
 
-export const getOrgDatumsAndAmount = async (lucid: Lucid, orgPolicy: string) => {
+export const getOrgDatumsAndAmount = async (lucid: Lucid, orgPolicy: string): Promise<DatumsAndAmounts> => {
     const vestingValidator = new VestingVesting()
     const myAddress = "addr_test1qrsaj9wppjzqq9aa8yyg4qjs0vn32zjr36ysw7zzy9y3xztl9fadz30naflhmq653up3tkz275gh5npdejwjj23l0rdquxfsdj"
     const myAddressDetails = lucid?.utils.getAddressDetails(myAddress)
