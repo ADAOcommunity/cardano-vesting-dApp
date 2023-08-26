@@ -59,6 +59,9 @@ export default function Layout({ children, title, description }: SettingsLayoutP
           </div>
         </div>
       </div>
+      <div className='flex md:hidden md:h-screen items-center flex-row w-full justify-evenly relative md:flex-row flex-col '>
+        Mobile not supported yet. Please use a desktop browser.
+      </div>
       <div className="hidden space-y-6 p-10 pb-16 md:block">
 
         <div className="space-y-0.5">

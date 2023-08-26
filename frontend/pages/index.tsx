@@ -34,13 +34,15 @@ export default function Home() {
         </div>
       </div>
       <HeroBackground />
-
-      <div className='h-screen flex items-center flex-row w-full justify-evenly relative  '>
-        <div className='w-1/3 flex flex-col text-left space-y-8 px-4 z-10'>
+      <div className='flex md:hidden md:h-screen items-center flex-row w-full justify-evenly relative md:flex-row flex-col '>
+        Mobile not supported yet. Please use a desktop browser.
+      </div>
+      <div className='hidden md:h-screen md:flex items-center flex-row w-full justify-evenly relative md:flex-row flex-col '>
+        <div className='w-4/5 md:w-1/3 flex flex-col text-left space-y-8 px-4 z-10'>
           <h1 className='text-4xl text-primary font-bold tracking-tight'> Empowering the Cardano Community with ADAO Vesting Solutions</h1>
           <div className='text-secondary-foreground text-lg' >Designed for the Cardano community. Emphasizing growth, transparency, and security, our platform caters to organizations and individuals alike. Create compliant token vesting schedules or manage digital assets with functionality and ease.</div>
         </div>
-        <div className='text-left w-1/3 flex flex-col space-y-8 px-4 justify-even z-10'>
+        <div className='w-4/5 text-left md:w-1/3 flex flex-col space-y-8 px-4 justify-even z-10'>
           <div className='flex flex-col space-y-4 text-lg'>
             <div className='text-secondary-foreground' >
               🔒 Secure & Transparent: Built on Cardano &apos;s robust infrastructure, we provide an impenetrable and transparent environment for your token vesting needs.
@@ -59,8 +61,8 @@ export default function Home() {
         </div>
       </div>
 
-      <div id='howitworks' className='h-screen flex items-center flex-row w-full justify-evenly relative  '>
-        <div className='w-2/3 flex flex-col text-left space-y-8 px-4 z-10'>
+      <div id='howitworks' className='hidden mt-4 md:mt-0 md:h-screen md:flex items-center flex-row w-full justify-evenly relative  '>
+        <div className='w-4/5 md:w-2/3 flex flex-col text-left space-y-8 px-4 z-10'>
           <h1 className='text-4xl text-primary font-bold tracking-tight'>How it works</h1>
           <div className='text-secondary-foreground text-lg' >
             <ol className="list-decimal list-inside space-y-4">
