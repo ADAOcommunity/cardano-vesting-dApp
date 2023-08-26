@@ -28,6 +28,10 @@ export default function Home() {
             <Link href='https://discord.gg/BGuhdBXQFU'><Button variant={'ghost'} size='icon'><TwitterLogoIcon /></Button></Link>
           </div>
         </div>
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-2 rounded relative" role="alert">
+          <span className="block sm:inline">Application is in beta. Smart contracts are being reviewed and audited. </span>
+          <span className="block sm:inline">Use on mainnet at your own risk.</span>
+        </div>
       </div>
       <HeroBackground />
 
