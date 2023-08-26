@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
+import { tokenNameFromHex } from '@/utils/utils';
 
 export type VestedAmount = {
     tokenName: string;
@@ -42,6 +43,8 @@ const OrganizationVestingChart: React.FC<Props> = ({ data }) => {
     useEffect(() => {
         if (svgRef.current) {
             const svg = d3.select(svgRef.current);
+            svg
+                .attr("class", "text-primary")  // Add this line
 
             // Dimensions
             const width = 800;
@@ -98,7 +101,7 @@ const OrganizationVestingChart: React.FC<Props> = ({ data }) => {
             // Display totals in the top-right corner
             const legend = svg.append("g")
                 .attr("font-family", "sans-serif")
-                .attr("font-size", 10)
+                .attr("font-size", 13)
                 .attr("text-anchor", "start")
                 .selectAll("g")
                 .data(tokenTotals)
@@ -112,9 +115,11 @@ const OrganizationVestingChart: React.FC<Props> = ({ data }) => {
                 .attr("fill", d => colorScale(d.tokenName));
 
             legend.append("text")
+                .attr("class", " fill-primary")  // Add this line
+                // .style("fill", "white")
                 .attr("x", 20)
                 .attr("y", 10)
-                .text(d => `${d.tokenName}: ${d.total}`);
+                .text(d => `${tokenNameFromHex(d.tokenName.slice(56))}: ${d.total}`);
         }
 
     }, [data]);
