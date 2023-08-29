@@ -141,7 +141,7 @@ export default function OrgDashboard() {
                 console.log('orgStats rejected. reason:', orgStats.reason)
                 return null
             }
-            setTokenList(orgDatums.value.map(datum => datum.datum.tokenPolicyId + datum.datum.tokenName))
+            setTokenList(Array.from(new Set(orgDatums.value.map(datum => datum.datum.tokenPolicyId + datum.datum.tokenName)))) 
             return { orgDatums: orgDatums.value as DatumsAndAmounts, orgStats: orgStats.value }
         }
         return null
