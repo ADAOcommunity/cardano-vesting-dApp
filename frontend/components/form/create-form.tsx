@@ -177,7 +177,7 @@ export function VestingForm() {
                     date: BigInt(schedule.freeDate.getTime()),
                     token_name: schedule.token.slice(56),
                     amount: schedule.amount,
-                    tokens_required: BigInt(schedule.tokensRequired || 1 ), //org tokens required to unlock
+                    tokens_required: schedule.tokensRequired || 1, //org tokens required to unlock
                     token_policy_id: schedule.token.slice(0, 56),
                     period_length: 0,
                     periods: 1
