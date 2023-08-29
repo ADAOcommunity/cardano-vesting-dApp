@@ -9,10 +9,12 @@ import {
   QueryClientProvider,
   useQuery,
 } from "@tanstack/react-query";
+import { getUserAddressesAndPkhs } from '@/utils/utils'
 
 const initialUser = {
   address: "",
-  walletName: ""
+  walletName: "",
+  addressesAndPkhs: [],
 }
 type User = typeof initialUser
 const queryClient = new QueryClient();
@@ -35,6 +37,9 @@ export default function App({ Component, pageProps }: AppProps) {
     if (user && user.address && user.walletName) {
       localStorage.setItem('walletName', user.walletName)
       localStorage.setItem('walletAddress', user.address)
+      getUserAddressesAndPkhs(user.walletName).then((addressesAndPkhs: any) => {
+        setUser({ ...user, addressesAndPkhs })
+      })
       window?.cardano[user.walletName].enable()
         .then((walletApi) => {
           console.log({ walletApi })
@@ -52,7 +57,10 @@ export default function App({ Component, pageProps }: AppProps) {
 
     if (walletName && walletAddress) {
       console.log({ walletName, walletAddress })
-      setUser({ walletName, address: walletAddress })
+      getUserAddressesAndPkhs(walletName).then((addressesAndPkhs: any) => {
+        setUser({ walletName, address: walletAddress, addressesAndPkhs })
+
+      })
     }
   }, [])
 
