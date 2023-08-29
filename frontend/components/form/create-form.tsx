@@ -58,6 +58,7 @@ const vestingScheduleSchema = z.object(
                             }),
                             periodical: z.boolean(),
                             periods: z.number().min(1, { message: "Periods must be greater than 0" }).optional(),
+                            tokensRequired: z.number().min(1, { message: "Required tokens must be greater than 0" }).optional(),
                             periodLength: z.number().min(0, { message: "Period length must be greater than 0" }).optional(),
                             amount: z.number().min(0.1, { message: "Amount must be greater than 0" })
                         })
@@ -97,6 +98,7 @@ const defaultValues: Partial<VestingFormValues> = {
                     periods: 1,
                     periodical: true,
                     periodLength: 0,
+                    tokensRequired: 1,
                     token: ""
                 }
             ]
@@ -175,7 +177,7 @@ export function VestingForm() {
                     date: BigInt(schedule.freeDate.getTime()),
                     token_name: schedule.token.slice(56),
                     amount: schedule.amount,
-                    tokens_required: 1, //org tokens required to unlock
+                    tokens_required: BigInt(schedule.tokensRequired || 1 ), //org tokens required to unlock
                     token_policy_id: schedule.token.slice(0, 56),
                     period_length: 0,
                     periods: 1
@@ -197,22 +199,22 @@ export function VestingForm() {
         const stakeCredential = myAddressDetails?.stakeCredential
         const contractAddress = lucid!.utils.validatorToAddress(validator, stakeCredential)
         const validatorHash = lucid!.utils.validatorToScriptHash(validator)
-        const beaconPolicy = new BeaconBeaconToken(validatorHash, stakeCredential!.hash )
+        const beaconPolicy = new BeaconBeaconToken(validatorHash, stakeCredential!.hash)
         const beaconPolicyId = lucid!.utils.mintingPolicyToId(beaconPolicy)
         const mintRedeemer = Data.to(new Constr(0, []));
         const formatted = formatValues(values)
         const utxos = await lucid?.utxosAt(await lucid.wallet.address())
         const utxo = utxos![0]
         const beaconName = orgPolicy//Buffer.from(orgPolicy as string, "hex").toString("hex") //toHex(Buffer.from("caca", "utf8"))//toHex(Buffer.from(beaconPolicyId, "utf8"))
-        console.log({beaconName})
+        console.log({ beaconName })
         console.log({ formatted })
         let tx = lucid?.newTx()
-        .collectFrom([utxo])
-        .attachMintingPolicy(beaconPolicy)
+            .collectFrom([utxo])
+            .attachMintingPolicy(beaconPolicy)
         for (let receiver of formatted) {
             // const {amount, token, ...rest} = receiver // remove the "amount" property from the receiver object
             const d: VestingVesting["datum"] = {
-                datumId: utxo.txHash+evenDigits(utxo.outputIndex),
+                datumId: utxo.txHash + evenDigits(utxo.outputIndex),
                 beneficiary: receiver.beneficiary,
                 date: BigInt(receiver.date),
                 tokensRequired: BigInt(receiver.tokens_required),
@@ -231,10 +233,10 @@ export function VestingForm() {
 
             const datum = Data.to(d, VestingVesting.datum)
 
-            
-            tx = tx!.payToContract(contractAddress, { inline: datum }, { [receiver.token_policy_id+receiver.token_name]: BigInt(receiver.amount!*receiver.periods), [beaconPolicyId+orgPolicy]: BigInt(1) })
+
+            tx = tx!.payToContract(contractAddress, { inline: datum }, { [receiver.token_policy_id + receiver.token_name]: BigInt(receiver.amount! * receiver.periods), [beaconPolicyId + orgPolicy]: BigInt(1) })
         }
-        tx= tx?.mintAssets({[beaconPolicyId+orgPolicy]: BigInt(formatted.length)}, mintRedeemer)
+        tx = tx?.mintAssets({ [beaconPolicyId + orgPolicy]: BigInt(formatted.length) }, mintRedeemer)
         console.log(await tx?.toString())
         const txComplete = await tx?.complete()
         const signedTx = await txComplete?.sign().complete()
@@ -256,6 +258,7 @@ export function VestingForm() {
                             </CardTitle>
                         </div>
                         <CardContent>
+                            
                             <FormField
                                 control={form.control}
                                 name={`items.${index}.beneficiary`}
