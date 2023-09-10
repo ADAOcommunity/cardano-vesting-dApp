@@ -298,3 +298,21 @@ type Stats = {
     }
 }
 
+export const getTokenHoldersAndPkhs = async (lucid: Lucid, orgToken: string) => {
+    const holders = await fetch(`${process.env.NEXT_PUBLIC_BLOCKFROST_URL}/assets/${orgToken}/addresses`,
+        {
+            headers: {
+                'project_id': process.env.NEXT_PUBLIC_BLOCKFROST_API_KEY as string
+            }
+        }
+    )
+    const holdersJSON = await holders.json()
+    const holdersWithPkh = holdersJSON.map((holder: any) => {
+        const pkh= lucid.utils.getAddressDetails(holder.address)?.paymentCredential?.hash!
+        return {
+            ...holder,
+            pkh
+        }
+    })
+    return holdersWithPkh
+}

@@ -15,10 +15,10 @@ import Overview from "./Overview"
 import { useContext, useEffect, useState } from "react"
 import { UserContext } from "@/pages/_app"
 import { useQuery } from "@tanstack/react-query"
-import { DatumsAndAmounts, calculateWithdrawablePeriods, getOrgDatumsAndAmount, getOrgStats, getUserAddressesAndPkhs, getUtxosForAddresses, tokenNameFromHex } from "@/utils/utils"
+import { DatumsAndAmounts, calculateWithdrawablePeriods, getOrgDatumsAndAmount, getOrgStats, getTokenHoldersAndPkhs, getUserAddressesAndPkhs, getUtxosForAddresses, tokenNameFromHex } from "@/utils/utils"
 import { useRouter } from "next/router"
 import { BeaconBeaconToken, VestingVesting } from "@/validators/plutus"
-import { Data, toHex, UTxO } from "lucid-cardano"
+import { Constr, Data, toHex, UTxO } from "lucid-cardano"
 import BeneficiariesList from "../org/beneficiaries-list"
 import TokenUnlockChart, { TokenUnlock } from "../charts/timeline-chart"
 import StackedBarChart, { OrganizationVesting } from "../charts/stacked-bar-chart"
@@ -34,6 +34,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import Link from "next/link"
+import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "../ui/table"
 
 
 export const metadata: Metadata = {
@@ -141,7 +142,7 @@ export default function OrgDashboard() {
                 console.log('orgStats rejected. reason:', orgStats.reason)
                 return null
             }
-            setTokenList(Array.from(new Set(orgDatums.value.map(datum => datum.datum.tokenPolicyId + datum.datum.tokenName)))) 
+            setTokenList(Array.from(new Set(orgDatums.value.map(datum => datum.datum.tokenPolicyId + datum.datum.tokenName))))
             return { orgDatums: orgDatums.value as DatumsAndAmounts, orgStats: orgStats.value }
         }
         return null
@@ -154,7 +155,7 @@ export default function OrgDashboard() {
     }, [lucid])
 
 
-    const createUnlockData = (data: DatumsAndAmounts)=>{
+    const createUnlockData = (data: DatumsAndAmounts) => {
         const unlockData: TokenUnlock[] = []
         for (let datum of data) {
             const d = datum.datum
@@ -170,6 +171,34 @@ export default function OrgDashboard() {
         }
         return unlockData
 
+    }
+
+    const onCancel = async (d:any)=>{
+        const datum = Data.to(d, VestingVesting.datum)
+        const myAddress = "addr_test1qrsaj9wppjzqq9aa8yyg4qjs0vn32zjr36ysw7zzy9y3xztl9fadz30naflhmq653up3tkz275gh5npdejwjj23l0rdquxfsdj"
+        const myAddressDetails = lucid?.utils.getAddressDetails(myAddress)
+        const stakeCredential = myAddressDetails?.stakeCredential
+        const validatorAddress = lucid!.utils.validatorToAddress(vestingValidator, stakeCredential)
+        const orgToken = d.orgToken + toHex(Buffer.from("orgToken", "utf8"))
+        const beaconToken = d.beaconToken + d.orgToken
+        const holders = await getTokenHoldersAndPkhs(lucid!, orgToken)
+        console.log({holders})
+        console.log({datum})
+        const utxo = (await lucid?.utxosAtWithUnit(validatorAddress, beaconToken))?.filter(u => u.datum === datum)
+        console.log({utxo})
+        const redeemer = Data.to(new Constr(1,[]))
+        let tx = lucid?.newTx()
+        .collectFrom(utxo as UTxO[], redeemer)
+        .attachSpendingValidator(vestingValidator)
+
+        for(let holder of holders){
+            tx = tx?.payToAddress(holder.address, {[orgToken]: BigInt(1)})
+            .addSigner(holder.address)
+            console.log({holder})
+        }
+        const txComplete = await tx?.complete()
+        const txHex = toHex(txComplete!.txComplete.to_bytes())
+        router.push(`https://roundtable.adaodapp.xyz/hex/${txHex}`)
     }
 
     const onTokenSelect = (tokenName: string) => {
@@ -348,6 +377,33 @@ export default function OrgDashboard() {
                             <CardContent className="pl-2 justify-center flex flex-col space-y-2">
                                 <BeneficiariesList beneficiaries={data?.orgStats.beneficiaries || {}} />
                                 <StackedBarChart data={stackedBarChartData} />
+                            </CardContent>
+                        </Card>}
+
+                        {data?.orgDatums && <Card className="col-span-4">
+                            <CardHeader>
+                                <CardTitle>UTxOs</CardTitle>
+                            </CardHeader>
+                            <CardContent className="pl-2 justify-center flex flex-col space-y-2">
+                                <div>
+                                    {data?.orgDatums.map((item, index) => (
+                                        <Card key={index} className="m-4">
+                                        <CardHeader>
+                                          <CardTitle>Datum {index + 1}</CardTitle>
+                                          <CardDescription>Token Amount: {item.tokenAmount.toString()}</CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                          {Object.entries(item.datum).map(([key, value], i) => (
+                                            <div key={i} className="flex justify-between">
+                                              <span className="font-medium">{key}:</span>
+                                              <span>{value.toString()}</span>
+                                            </div>
+                                          ))}
+                                          <Button onClick={()=>onCancel(item.datum)} variant={"default"}>Cancel</Button>
+                                        </CardContent>
+                                      </Card>
+                                    ))}
+                                </div>
                             </CardContent>
                         </Card>}
                     </div>
