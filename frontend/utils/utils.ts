@@ -359,3 +359,47 @@ export const applyTokenDecimals = async (unit: string, amount: number): Promise<
         return { quantity: multiplyFloatByBigInt(amount, BigInt(10 ** 6)), decimals: 6 }
     }
 }
+
+export const divideBigIntByNumberPrecise = (bigIntNumber: bigint, number: number) => {
+    // Separate the number into its integer and fractional parts
+    const integerPart = Math.trunc(number);
+    const fractionalPart = number - integerPart;
+  
+    // Calculate the quotient and remainder when dividing the BigInt by the integer part
+    const quotient = bigIntNumber / BigInt(integerPart);
+    const remainder = bigIntNumber % BigInt(integerPart);
+  
+    // Calculate the fractional contribution by dividing the remainder by the integer part
+    // and then dividing by the original number to account for the fractional part
+    const fractionalContribution = Number(remainder) / (integerPart );
+  
+    // Combine the integer quotient with the fractional contribution
+    const result = Number(quotient) + fractionalContribution;
+    return result;
+  }
+
+export const formatFromTokenRegistry = async (unit: string, amount: bigint) => {
+    if (unit != "lovelace") {
+        try {
+            const resp = await fetch(`${process.env.BLOCKFROST_URL}/assets/${unit}`, {
+                headers: { project_id: process.env.BLOCKFROST_PROJECT_ID as string },
+            }).then((res) => res.json());
+            //if (resp.status === 200) {
+            //    const data = await resp.json();
+            if (resp.metadata && resp.metadata.decimals > 0) {
+                return { quantity: divideBigIntByNumberPrecise(amount, 10 ** resp.metadata.decimals), decimals: resp.metadata.decimals,  existingQuantity: divideBigIntByNumberPrecise(BigInt(resp.quantity), 10 ** resp.metadata.decimals) }
+                //    }
+
+            } else {
+                console.log("existing", resp.quantity)
+                return { quantity: amount, decimals: 0, existingQuantity: BigInt(resp.quantity) }
+            }
+
+        } catch (err) {
+            console.log(err)
+            return { quantity: amount, decimals: 0, existingQuantity: BigInt(0) }
+        }
+    } else {
+        return { quantity: amount, decimals: 6, existingQuantity: BigInt(0) }
+    }
+}

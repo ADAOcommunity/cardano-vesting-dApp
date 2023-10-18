@@ -15,7 +15,7 @@ import Overview from "./Overview"
 import { useContext, useEffect, useState } from "react"
 import { UserContext } from "@/pages/_app"
 import { useQuery } from "@tanstack/react-query"
-import { DatumsAndAmounts, calculateWithdrawablePeriods, getOrgDatumsAndAmount, getOrgStats, getTokenHoldersAndPkhs, getUserAddressesAndPkhs, getUtxosForAddresses, tokenNameFromHex } from "@/utils/utils"
+import { DatumsAndAmounts, calculateWithdrawablePeriods, formatFromTokenRegistry, getOrgDatumsAndAmount, getOrgStats, getTokenHoldersAndPkhs, getUserAddressesAndPkhs, getUtxosForAddresses, tokenNameFromHex } from "@/utils/utils"
 import { useRouter } from "next/router"
 import { BeaconBeaconToken, VestingVesting } from "@/validators/plutus"
 import { Constr, Data, toHex, UTxO } from "lucid-cardano"
@@ -173,7 +173,7 @@ export default function OrgDashboard() {
 
     }
 
-    const onCancel = async (d:any)=>{
+    const onCancel = async (d: any) => {
         const datum = Data.to(d, VestingVesting.datum)
         const myAddress = "addr_test1qrsaj9wppjzqq9aa8yyg4qjs0vn32zjr36ysw7zzy9y3xztl9fadz30naflhmq653up3tkz275gh5npdejwjj23l0rdquxfsdj"
         const myAddressDetails = lucid?.utils.getAddressDetails(myAddress)
@@ -182,47 +182,62 @@ export default function OrgDashboard() {
         const orgToken = d.orgToken + toHex(Buffer.from("orgToken", "utf8"))
         const beaconToken = d.beaconToken + d.orgToken
         const holders = await getTokenHoldersAndPkhs(lucid!, orgToken)
-        console.log({holders})
-        console.log({datum})
+        console.log({ holders })
+        console.log({ datum })
         const utxo = (await lucid?.utxosAtWithUnit(validatorAddress, beaconToken))?.filter(u => u.datum === datum)
-        console.log({utxo})
-        const redeemer = Data.to(new Constr(1,[]))
+        console.log({ utxo })
+        const redeemer = Data.to(new Constr(1, []))
         let tx = lucid?.newTx()
-        .collectFrom(utxo as UTxO[], redeemer)
-        .attachSpendingValidator(vestingValidator)
+            .collectFrom(utxo as UTxO[], redeemer)
+            .attachSpendingValidator(vestingValidator)
 
-        for(let holder of holders){
-            tx = tx?.payToAddress(holder.address, {[orgToken]: BigInt(1)})
-            .addSigner(holder.address)
-            console.log({holder})
+        for (let holder of holders) {
+            tx = tx?.payToAddress(holder.address, { [orgToken]: BigInt(1) })
+                .addSigner(holder.address)
+            console.log({ holder })
         }
         const txComplete = await tx?.complete()
         const txHex = toHex(txComplete!.txComplete.to_bytes())
         router.push(`https://roundtable.adaodapp.xyz/hex/${txHex}`)
     }
 
-    const onTokenSelect = (tokenName: string) => {
+    const onTokenSelect = async (tokenName: string) => {
         console.log(tokenName)
-        setBeneficiariesData(data?.orgDatums.filter(datum => datum.datum.tokenPolicyId + datum.datum.tokenName === tokenName).map(datum => {
-            return {
+        const benefData = []
+        for (let datum of data?.orgDatums.filter(datum => datum.datum.tokenPolicyId + datum.datum.tokenName === tokenName) || []) {
+            const unit = datum.datum.tokenPolicyId + datum.datum.tokenName
+            const amount = BigInt(datum.datum.amountPerPeriod) * BigInt(calculateWithdrawablePeriods(datum.datum.periodLength, datum.datum.date))
+            const formattedData = await formatFromTokenRegistry(unit, amount)
+            const formatedAmount = formattedData.quantity
+            const d = {
                 address: datum.datum.beneficiary,
-                amount: Number(datum.datum.amountPerPeriod) * calculateWithdrawablePeriods(datum.datum.periodLength, datum.datum.date)
+                amount: Number(formatedAmount)
             }
-        }) || [])
+            benefData.push(d)
+        }
+        setBeneficiariesData(benefData)
 
+        const barChartBeneficiaries = []
+
+        for (let beneficiary of Object.keys(data?.orgStats.beneficiaries || [])) {
+            const vestedAmounts = []
+            for (let tokenName of Object.keys(data?.orgStats.beneficiaries[beneficiary] || [])) {
+                const formattedData = await formatFromTokenRegistry(tokenName, BigInt(data?.orgStats.beneficiaries[beneficiary][tokenName].totalVested || 0))
+                const formattedAmount = formattedData.quantity
+                vestedAmounts.push({
+                    tokenName,
+                    amount: Number(formattedAmount) || 0
+                })
+            }
+            barChartBeneficiaries.push({
+                beneficiaryName: beneficiary,
+                vestedAmounts
+            })
+
+        }
         setStackedBarChartData({
             orgName: orgPolicy as string,
-            beneficiaries: Object.keys(data?.orgStats.beneficiaries || []).map(beneficiary => {
-                return {
-                    beneficiaryName: beneficiary,
-                    vestedAmounts: Object.keys(data?.orgStats.beneficiaries[beneficiary] || []).map(tokenName => {
-                        return {
-                            tokenName,
-                            amount: Number(data?.orgStats.beneficiaries[beneficiary][tokenName].totalVested) || 0
-                        }
-                    }).filter(vestedAmount => vestedAmount.tokenName === tokenName)
-                }
-            })
+            beneficiaries: barChartBeneficiaries
         })
         setUnlockData(createUnlockData(data!.orgDatums))
     }
@@ -388,20 +403,20 @@ export default function OrgDashboard() {
                                 <div>
                                     {data?.orgDatums.map((item, index) => (
                                         <Card key={index} className="m-4">
-                                        <CardHeader>
-                                          <CardTitle>Datum {index + 1}</CardTitle>
-                                          <CardDescription>Token Amount: {item.tokenAmount.toString()}</CardDescription>
-                                        </CardHeader>
-                                        <CardContent>
-                                          {Object.entries(item.datum).map(([key, value], i) => (
-                                            <div key={i} className="flex justify-between">
-                                              <span className="font-medium">{key}:</span>
-                                              <span>{value.toString()}</span>
-                                            </div>
-                                          ))}
-                                          <Button onClick={()=>onCancel(item.datum)} variant={"default"}>Cancel</Button>
-                                        </CardContent>
-                                      </Card>
+                                            <CardHeader>
+                                                <CardTitle>Datum {index + 1}</CardTitle>
+                                                <CardDescription>Token Amount: {item.tokenAmount.toString()}</CardDescription>
+                                            </CardHeader>
+                                            <CardContent>
+                                                {Object.entries(item.datum).map(([key, value], i) => (
+                                                    <div key={i} className="flex justify-between">
+                                                        <span className="font-medium">{key}:</span>
+                                                        <span>{value.toString()}</span>
+                                                    </div>
+                                                ))}
+                                                <Button onClick={() => onCancel(item.datum)} variant={"default"}>Cancel</Button>
+                                            </CardContent>
+                                        </Card>
                                     ))}
                                 </div>
                             </CardContent>
