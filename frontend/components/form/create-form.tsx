@@ -28,7 +28,7 @@ import { BeneficiarySchedule } from "./schedule-form"
 import { Card, CardContent, CardTitle } from "../ui/card"
 import { useContext, useEffect, useState } from "react"
 import { UserContext } from "@/pages/_app"
-import { evenDigits, getAssetsFromStakeAddress } from "@/utils/utils"
+import { applyTokenDecimals, evenDigits, getAssetsFromStakeAddress } from "@/utils/utils"
 import { Constr, Data, SpendingValidator, fromHex, toHex } from "lucid-cardano"
 import { BeaconBeaconToken, VestingVesting } from "@/validators/plutus"
 import { useRouter } from "next/router"
@@ -213,6 +213,11 @@ export function VestingForm() {
             .attachMintingPolicy(beaconPolicy)
         for (let receiver of formatted) {
             // const {amount, token, ...rest} = receiver // remove the "amount" property from the receiver object
+            const datum = Data.to(d, VestingVesting.datum)
+            const unit = receiver.token_policy_id + receiver.token_name
+            const tokenData = await applyTokenDecimals(unit, receiver.amount)
+            const formattedAmount = tokenData.quantity
+
             const d: VestingVesting["datum"] = {
                 datumId: utxo.txHash + evenDigits(utxo.outputIndex),
                 beneficiary: receiver.beneficiary,
@@ -222,7 +227,7 @@ export function VestingForm() {
                 beaconToken: beaconPolicyId,
                 numPeriods: BigInt(receiver.periods),
                 periodLength: BigInt(receiver.period_length),
-                amountPerPeriod: BigInt(receiver.amount),
+                amountPerPeriod: formattedAmount,
                 tokenPolicyId: receiver.token_policy_id,
                 tokenName: receiver.token_name,
             }
@@ -230,11 +235,8 @@ export function VestingForm() {
             const datumVals = Object.values(d)
             console.log({datumVals})    
             const datum = Data.to(new Constr(0,datumVals)) */
-
-            const datum = Data.to(d, VestingVesting.datum)
-
-
-            tx = tx!.payToContract(contractAddress, { inline: datum }, { [receiver.token_policy_id + receiver.token_name]: BigInt(receiver.amount! * receiver.periods), [beaconPolicyId + orgPolicy]: BigInt(1) })
+            
+            tx = tx!.payToContract(contractAddress, { inline: datum }, { [unit]: formattedAmount *BigInt(receiver.periods), [beaconPolicyId + orgPolicy]: BigInt(1) })
         }
         tx = tx?.mintAssets({ [beaconPolicyId + orgPolicy]: BigInt(formatted.length) }, mintRedeemer)
         console.log(await tx?.toString())

@@ -316,3 +316,46 @@ export const getTokenHoldersAndPkhs = async (lucid: Lucid, orgToken: string) => 
     })
     return holdersWithPkh
 }
+
+export const multiplyFloatByBigInt = (floatNumber: number, bigIntNumber: bigint) => {
+    // Break the floating-point number into its integer and fractional parts
+    const integerPart = BigInt(Math.trunc(floatNumber));
+    const fractionalPart = floatNumber - Math.trunc(floatNumber);
+  
+    // Multiply the integer part by the BigInt
+    const integerProduct = integerPart * bigIntNumber;
+  
+    // Multiply the fractional part by the BigInt, round the result, and convert it back to a BigInt
+    const fractionalProduct = BigInt(Math.round(fractionalPart * Number(bigIntNumber)));
+  
+    // Add the results of integerProduct and fractionalProduct
+    const result = integerProduct + fractionalProduct;
+    console.log({result, floatNumber, bigIntNumber})
+    return result;
+  }
+
+
+  //This function takes a float number and returns the bigint amount of the token after considering the amount of decimals of the token
+export const applyTokenDecimals = async (unit: string, amount: number): Promise<{quantity: bigint, decimals: number}> => {
+    if (unit != "lovelace") {
+        try {
+            const resp = await fetch(`${process.env.BLOCKFROST_URL}/assets/${unit}`, {
+                headers: { project_id: process.env.BLOCKFROST_PROJECT_ID as string },
+            }).then((res) => res.json());
+            if (resp.metadata && resp.metadata.decimals > 0) {
+                return { quantity: multiplyFloatByBigInt(amount, BigInt(10 ** resp.metadata.decimals)), decimals: resp.metadata.decimals }
+                //    }
+
+            } else {
+                return { quantity: BigInt(Math.trunc(amount)), decimals: 0}
+            }
+
+        } catch (err) {
+            console.log(err)
+            throw Error("Error getting token metadata")
+            //return { quantity: BigInt(0), decimals: 0 }
+        }
+    } else {
+        return { quantity: multiplyFloatByBigInt(amount, BigInt(10 ** 6)), decimals: 6 }
+    }
+}
