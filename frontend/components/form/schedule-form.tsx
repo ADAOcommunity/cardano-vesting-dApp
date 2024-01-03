@@ -52,7 +52,7 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
     const addBeneficiarySchedule = (e: any) => {
 
         e.preventDefault()
-        append({ amount: 0, token: "", freeDate: new Date(), periods:1, periodLength:0, periodical: true })
+        append({ amount: 0, token: "", freeDate: new Date(), periods: 1, periodLength: 0, periodical: true })
 
     }
     const removeBeneficiarySchedule = (e: any, index: number) => {
@@ -137,7 +137,7 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
                                     </FormItem>
                                 )}
                             />
-                           {/*  <FormField
+                            {/*  <FormField
                                 control={form.control}
                                 name={`items.${scheduleIndex}.schedule.${index}.periodical`}
                                 render={({ field }) => (
@@ -195,6 +195,24 @@ export function BeneficiarySchedule({ scheduleIndex, onRemove }: Props) {
                                 />
                             </div>
                         }
+                        <div className="flex flex-row space-x-2 justify-even items-center">
+                            <FormField
+                                control={form.control}
+                                name={`items.${scheduleIndex}.schedule.${index}.tokensRequired`}
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Org tokens required</FormLabel>
+                                        <FormControl>
+                                            <Input value={form.getValues(`items.${scheduleIndex}.schedule.${index}.tokensRequired`)} onChange={(e) => form.setValue(`items.${scheduleIndex}.schedule.${index}.tokensRequired`, Number(e.target.value))} type="number" placeholder="Enter token amount" />
+                                        </FormControl>
+                                        <FormDescription>
+                                            Amount of tokens required to cancel a vesting schedule.
+                                        </FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                        </div>
                         <Button size={"sm"} className="mt-4 w-1/2 self-center" variant="destructive" onClick={(e) => removeBeneficiarySchedule(e, index)} >Remove trench</Button>
 
                     </CardContent>

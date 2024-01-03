@@ -3,8 +3,8 @@ use aiken/dict
 use aiken/interval.{Finite, NegativeInfinity, PositiveInfinity}
 use aiken/list
 use aiken/transaction.{
-  DatumHash, InlineDatum, NoDatum, Output, OutputReference, ScriptContext,
-  Transaction,
+  DatumHash, InlineDatum, Input, NoDatum, Output, OutputReference, ScriptContext,
+  ScriptPurpose, Transaction,
 } as tx
 use aiken/transaction/credential.{
   Address, Credential, Inline, PaymentCredential, ScriptCredential,
@@ -50,6 +50,50 @@ pub fn value_sent_to_scripthash(
       merge(final_val, output.value)
     },
   )
+}
+
+pub fn get_org_tokens_present_amount(
+  inputs: List<Input>,
+  policy_id: ByteArray,
+) -> Int {
+  let val =
+    list.foldl(
+      inputs,
+      zero(),
+      fn(input: Input, final_val: Value) -> Value {
+        merge(final_val, input.output.value)
+      },
+    )
+  expect [(name, amount)] =
+    val
+      |> value.tokens(policy_id)
+      |> dict.to_list()
+  amount
+}
+
+pub fn can_claim(
+  ctx: ScriptContext,
+  datum: Datum,
+  outputs: List<Output>,
+  purpose: ScriptPurpose,
+) {
+  expect tx.Spend(output_reference) = purpose
+
+  let amount_to_beneficiary = get_requested_amount(ctx, datum)
+  let withdrawable_amount =
+    calculate_withdrawable_amount(ctx, datum, output_reference)
+  let no_tokens_leave_tx: Bool =
+    list.all(
+      outputs,
+      fn(output) {
+        let assets =
+          output.value
+            |> value.tokens(datum.beacon_token)
+            |> dict.to_list()
+        assets == [] || output.address == get_contract_address(ctx)
+      },
+    )
+  amount_to_beneficiary <= withdrawable_amount && no_tokens_leave_tx
 }
 
 /// gets the value sent to a scripthash with a datum

@@ -1,6 +1,23 @@
 import { BeaconBeaconToken, VestingVesting } from "@/validators/plutus";
 import { C, Constr, Data, Lucid, UTxO, WalletApi, fromHex } from "lucid-cardano";
 
+export type DatumsAndAmounts = {
+    datum: {
+        datumId: string;
+        beneficiary: string;
+        date: bigint;
+        tokensRequired: bigint;
+        orgToken: string;
+        beaconToken: string;
+        numPeriods: bigint;
+        periodLength: bigint;
+        amountPerPeriod: bigint;
+        tokenPolicyId: string;
+        tokenName: string;
+    };
+    tokenAmount: bigint;
+}[]
+
 export const tokenNameFromHex = (assetName: string) => {
     return Buffer.from(assetName, 'hex').toString('utf-8')
 }
@@ -174,7 +191,7 @@ export const getUtxosForAddresses = async (lucid: Lucid, contractAddress: string
     return { utxos: formattedUtxos, claimable, totals }
 }
 
-export const getOrgDatumsAndAmount = async (lucid: Lucid, orgPolicy: string) => {
+export const getOrgDatumsAndAmount = async (lucid: Lucid, orgPolicy: string): Promise<DatumsAndAmounts> => {
     const vestingValidator = new VestingVesting()
     const myAddress = "addr_test1qrsaj9wppjzqq9aa8yyg4qjs0vn32zjr36ysw7zzy9y3xztl9fadz30naflhmq653up3tkz275gh5npdejwjj23l0rdquxfsdj"
     const myAddressDetails = lucid?.utils.getAddressDetails(myAddress)
@@ -278,5 +295,111 @@ type Stats = {
             withdrawn: bigint,
             remaining: bigint,
         }
+    }
+}
+
+export const getTokenHoldersAndPkhs = async (lucid: Lucid, orgToken: string) => {
+    const holders = await fetch(`${process.env.NEXT_PUBLIC_BLOCKFROST_URL}/assets/${orgToken}/addresses`,
+        {
+            headers: {
+                'project_id': process.env.NEXT_PUBLIC_BLOCKFROST_API_KEY as string
+            }
+        }
+    )
+    const holdersJSON = await holders.json()
+    const holdersWithPkh = holdersJSON.map((holder: any) => {
+        const pkh= lucid.utils.getAddressDetails(holder.address)?.paymentCredential?.hash!
+        return {
+            ...holder,
+            pkh
+        }
+    })
+    return holdersWithPkh
+}
+
+export const multiplyFloatByBigInt = (floatNumber: number, bigIntNumber: bigint) => {
+    // Break the floating-point number into its integer and fractional parts
+    const integerPart = BigInt(Math.trunc(floatNumber));
+    const fractionalPart = floatNumber - Math.trunc(floatNumber);
+  
+    // Multiply the integer part by the BigInt
+    const integerProduct = integerPart * bigIntNumber;
+  
+    // Multiply the fractional part by the BigInt, round the result, and convert it back to a BigInt
+    const fractionalProduct = BigInt(Math.round(fractionalPart * Number(bigIntNumber)));
+  
+    // Add the results of integerProduct and fractionalProduct
+    const result = integerProduct + fractionalProduct;
+    console.log({result, floatNumber, bigIntNumber})
+    return result;
+  }
+
+
+  //This function takes a float number and returns the bigint amount of the token after considering the amount of decimals of the token
+export const applyTokenDecimals = async (unit: string, amount: number): Promise<{quantity: bigint, decimals: number}> => {
+    if (unit != "lovelace") {
+        try {
+            const resp = await fetch(`${process.env.BLOCKFROST_URL}/assets/${unit}`, {
+                headers: { project_id: process.env.BLOCKFROST_PROJECT_ID as string },
+            }).then((res) => res.json());
+            if (resp.metadata && resp.metadata.decimals > 0) {
+                return { quantity: multiplyFloatByBigInt(amount, BigInt(10 ** resp.metadata.decimals)), decimals: resp.metadata.decimals }
+                //    }
+
+            } else {
+                return { quantity: BigInt(Math.trunc(amount)), decimals: 0}
+            }
+
+        } catch (err) {
+            console.log(err)
+            throw Error("Error getting token metadata")
+            //return { quantity: BigInt(0), decimals: 0 }
+        }
+    } else {
+        return { quantity: multiplyFloatByBigInt(amount, BigInt(10 ** 6)), decimals: 6 }
+    }
+}
+
+export const divideBigIntByNumberPrecise = (bigIntNumber: bigint, number: number) => {
+    // Separate the number into its integer and fractional parts
+    const integerPart = Math.trunc(number);
+    const fractionalPart = number - integerPart;
+  
+    // Calculate the quotient and remainder when dividing the BigInt by the integer part
+    const quotient = bigIntNumber / BigInt(integerPart);
+    const remainder = bigIntNumber % BigInt(integerPart);
+  
+    // Calculate the fractional contribution by dividing the remainder by the integer part
+    // and then dividing by the original number to account for the fractional part
+    const fractionalContribution = Number(remainder) / (integerPart );
+  
+    // Combine the integer quotient with the fractional contribution
+    const result = Number(quotient) + fractionalContribution;
+    return result;
+  }
+
+export const formatFromTokenRegistry = async (unit: string, amount: bigint) => {
+    if (unit != "lovelace") {
+        try {
+            const resp = await fetch(`${process.env.BLOCKFROST_URL}/assets/${unit}`, {
+                headers: { project_id: process.env.BLOCKFROST_PROJECT_ID as string },
+            }).then((res) => res.json());
+            //if (resp.status === 200) {
+            //    const data = await resp.json();
+            if (resp.metadata && resp.metadata.decimals > 0) {
+                return { quantity: divideBigIntByNumberPrecise(amount, 10 ** resp.metadata.decimals), decimals: resp.metadata.decimals,  existingQuantity: divideBigIntByNumberPrecise(BigInt(resp.quantity), 10 ** resp.metadata.decimals) }
+                //    }
+
+            } else {
+                console.log("existing", resp.quantity)
+                return { quantity: amount, decimals: 0, existingQuantity: BigInt(resp.quantity) }
+            }
+
+        } catch (err) {
+            console.log(err)
+            return { quantity: amount, decimals: 0, existingQuantity: BigInt(0) }
+        }
+    } else {
+        return { quantity: amount, decimals: 6, existingQuantity: BigInt(0) }
     }
 }

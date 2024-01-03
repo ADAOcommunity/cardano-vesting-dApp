@@ -50,6 +50,7 @@ const PieChart: React.FC<PieChartProps> = ({ data }) => {
             .data(color.domain())
             .enter().append("g")
             // .attr("class", "legend")
+            .attr("class", "text-primary-foreground")  // Add this line
 
             .attr("transform", (d, i) => `translate(0,${i * 20})`);
 
@@ -66,9 +67,8 @@ const PieChart: React.FC<PieChartProps> = ({ data }) => {
             .attr("x", width - 65)
             .attr("y", 25)
             .attr("dy", ".35em")
-            .style("text-anchor", "start")
-            .classed("text-xs text-accent font-medium", true)
-
+            //.style("text-anchor", "start")
+             .attr("class", "fill-primary")  // Add this line
             .text(d => d);
 
     }, [data]);

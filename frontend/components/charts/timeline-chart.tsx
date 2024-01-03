@@ -118,6 +118,7 @@ const TokenUnlockChart: React.FC<TokenUnlockChartProps> = ({ data }) => {
         .attr("x", width - 24)
         .attr("y", 9.5)
         .attr("dy", "0.32em")
+        .attr("class", " fill-primary")  // Add this line
         .text(d => d);
     }
   }, [data]);

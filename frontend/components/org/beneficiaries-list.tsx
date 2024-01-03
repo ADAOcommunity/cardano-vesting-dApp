@@ -27,6 +27,7 @@ type Props = {
 }
 export default function BeneficiariesList({ beneficiaries }: Props) {
     const { lucid, user } = useContext(UserContext)
+    console.log({ user })
     const validator = new VestingVesting()
     const claim = async (utxos: { datum: VestingVesting["datum"], utxo: UTxO }[]) => {
         if (lucid) {
@@ -53,7 +54,7 @@ export default function BeneficiariesList({ beneficiaries }: Props) {
             }
             tx = tx.collectFrom(utxos.map(utxoData => utxoData.utxo), redeemer)
                 .payToAddress(beneficiaryAddress, { [utxos[0].datum.tokenPolicyId + utxos[0].datum.tokenName]: totalToBeneficiary })
-                .validFrom(Date.now()-60000)
+                .validFrom(Date.now() - 60000)
                 .validTo(Date.now() + 1000 * 60)
                 .addSigner(user.address)
                 .attachSpendingValidator(validator)
@@ -93,8 +94,12 @@ export default function BeneficiariesList({ beneficiaries }: Props) {
                                             </p>
                                         </div>
                                         <div className="ml-auto font-medium">+{beneficiaries[pkh][assetName].redeemable.toString()}</div>
-                                        <Button variant="outline" onClick={() => claim(beneficiaries[pkh][assetName].utxos)} >Claim</Button>
-
+                                        <>
+                                            {
+                                                user.addressesAndPkhs.some((i: { address: string, pkh: string }) => i.pkh == pkh)
+                                                && <Button variant="outline" onClick={() => claim(beneficiaries[pkh][assetName].utxos)} >Claim</Button>
+                                            }
+                                        </>
                                     </div>
                                     )
                                 })}
