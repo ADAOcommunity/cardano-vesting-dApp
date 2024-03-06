@@ -1,6 +1,5 @@
 import Image from 'next/image'
 import { Inter } from 'next/font/google'
-import Layout from '@/components/ui/layout'
 import { MainNav } from '@/components/main-nav'
 import WalletConnect from '@/components/wallet-connect'
 import { Button } from '@/components/ui/button'
@@ -9,7 +8,8 @@ import Link from 'next/link'
 import { GitHubLogoIcon } from "@radix-ui/react-icons";
 import { DiscordLogoIcon } from "@radix-ui/react-icons";
 import { TwitterLogoIcon } from "@radix-ui/react-icons";
-
+import { Web3Login } from '@/components/web3-login'
+import { ClientOnlyWrapWeb3Login } from '@/components/client-only-wrap-web3login'
 const inter = Inter({ subsets: ['latin'] })
 
 export default function Home() {
@@ -79,6 +79,7 @@ export default function Home() {
             </ol>
           </div>
           <Link href={'/org/create'}><Button size={'lg'} >Get started</Button></Link>
+          <ClientOnlyWrapWeb3Login />
         </div>
       </div>
     </>
